@@ -231,10 +231,9 @@ export function Bloodpressurgraph() {
                             <span className="text-[0.70rem] uppercase text-muted-foreground">Time</span>
                             <span className="font-bold">{data.fullTime}</span>
                             <span className="text-[0.70rem] uppercase text-muted-foreground">Blood Pressure</span>
-                            <span className="font-bold text-red-600">
+                            <span className="font-bold">
                               {data.systolic}/{data.diastolic} mmHg
                             </span>
-                            <span className="text-[0.60rem] text-muted-foreground">Original: {data.originalTimestamp}</span>
                           </div>
                         </div>
                       )
