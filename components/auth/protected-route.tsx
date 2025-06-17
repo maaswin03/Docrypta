@@ -21,9 +21,8 @@ export function ProtectedRoute({
 
   useEffect(() => {
     // Wait for auth to be initialized
-    if (!isInitialized || isLoading) {
+    if (!isInitialized) {
       console.log('⏳ Waiting for auth initialization...')
-      setShouldRender(false)
       return
     }
 
@@ -37,14 +36,14 @@ export function ProtectedRoute({
 
     if (!user) {
       console.log('❌ No user found, redirecting to:', redirectTo)
-      router.push(redirectTo)
+      router.replace(redirectTo)
       setShouldRender(false)
       return
     }
 
     if (!allowedRoles.includes(user.user_type)) {
       console.log('🚫 User role not allowed, showing 404')
-      router.push('/404')
+      router.replace('/404')
       setShouldRender(false)
       return
     }
