@@ -50,41 +50,41 @@ export default function Page() {
           
           {/* Main content area with proper scrolling and height constraints */}
           <div className="flex-1 overflow-y-auto min-h-0">
-            <div className="p-4 space-y-4 max-w-full">
+            <div className="p-4 space-y-6 max-w-full">
               {/* Latest Vitals Summary - Fixed height */}
               <div className="w-full">
                 <LatestVitalsSummary />
               </div>
 
-              {/* ECG Graph - Fixed height container */}
-              <div className="w-full h-[320px]">
+              {/* ECG Graph - Increased height container */}
+              <div className="w-full h-[380px]">
                 <Ecggraph />
               </div>
 
-              {/* Main vitals - Fixed height containers in responsive grid */}
-              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-2 2xl:grid-cols-3">
-                <div className="h-[280px] w-full">
+              {/* Main vitals - Increased height containers in responsive grid */}
+              <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-2 2xl:grid-cols-3">
+                <div className="h-[320px] w-full">
                   <Heartgraph />
                 </div>
-                <div className="h-[280px] w-full">
+                <div className="h-[320px] w-full">
                   <Spo2graph />
                 </div>
-                <div className="h-[280px] w-full">
+                <div className="h-[320px] w-full">
                   <Temperaturegraph />
                 </div>
-                <div className="h-[280px] w-full">
+                <div className="h-[320px] w-full">
                   <Respiratoryrategraph />
                 </div>
-                <div className="h-[280px] w-full">
+                <div className="h-[320px] w-full">
                   <Glucosegraph />
                 </div>
-                <div className="h-[280px] w-full">
+                <div className="h-[320px] w-full">
                   <Activitylevelgraph />
                 </div>
               </div>
 
-              {/* Blood pressure - Fixed height container */}
-              <div className="w-full h-[260px]">
+              {/* Blood pressure - Increased height container */}
+              <div className="w-full h-[300px]">
                 <Bloodpressurgraph />
               </div>
             </div>

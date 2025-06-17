@@ -164,36 +164,36 @@ export function Heartgraph() {
 
   return (
     <Card className="h-full flex flex-col overflow-hidden">
-      <CardHeader className="pb-2 flex-shrink-0">
+      <CardHeader className="pb-3 flex-shrink-0">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium">Heart Rate</CardTitle>
-          <Activity className="h-3 w-3 text-blue-500" />
+          <CardTitle className="text-base font-medium">Heart Rate</CardTitle>
+          <Activity className="h-4 w-4 text-blue-500" />
         </div>
         <CardDescription className="text-xs">Last 7 records • Format: DD MMM HHPM</CardDescription>
       </CardHeader>
-      <CardContent className="pb-2 flex-1 min-h-0 overflow-hidden">
+      <CardContent className="pb-3 flex-1 min-h-0 overflow-hidden">
         {error ? (
           <div className="flex h-full items-center justify-center text-sm text-red-500">{error}</div>
         ) : chartData.length > 0 ? (
           <ChartContainer config={chartConfig} className="h-full w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
+              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
                 <XAxis 
                   dataKey="time" 
                   tickLine={false} 
                   axisLine={false} 
-                  tickMargin={4} 
-                  tick={{ fontSize: 8 }}
+                  tickMargin={6} 
+                  tick={{ fontSize: 10 }}
                   interval={Math.floor(chartData.length / 3)} // Show ~3 labels
                 />
                 <YAxis
                   tickLine={false}
                   axisLine={false}
-                  tickMargin={4}
-                  tick={{ fontSize: 8 }}
+                  tickMargin={6}
+                  tick={{ fontSize: 10 }}
                   domain={["dataMin - 10", "dataMax + 10"]}
-                  width={30}
+                  width={35}
                 />
                 <ChartTooltip
                   cursor={false}
@@ -233,7 +233,7 @@ export function Heartgraph() {
       </CardContent>
       <CardFooter className="pt-0 flex-shrink-0">
         {average !== null && (
-          <div className="flex w-full items-center justify-between text-xs">
+          <div className="flex w-full items-center justify-between text-sm">
             <span className="text-muted-foreground">Average</span>
             <span className="font-medium">{average} BPM</span>
           </div>

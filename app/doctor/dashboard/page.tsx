@@ -20,8 +20,8 @@ export default function Page() {
     <ProtectedRoute allowedRoles={['doctor']}>
       <SidebarProvider>
         <AppSidebar />
-        <SidebarInset>
-          <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+        <SidebarInset className="flex flex-col h-screen overflow-hidden">
+          <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 border-b">
             <div className="flex items-center gap-2 px-4">
               <SidebarTrigger className="-ml-1" />
               <Separator orientation="vertical" className="mr-2 h-4" />
@@ -40,13 +40,28 @@ export default function Page() {
               </Breadcrumb>
             </div>
           </header>
-          <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-            <div className="grid auto-rows-min gap-4 md:grid-cols-3">
-              <div className="aspect-video rounded-xl bg-muted/50" />
-              <div className="aspect-video rounded-xl bg-muted/50" />
-              <div className="aspect-video rounded-xl bg-muted/50" />
+          
+          {/* Main content area with proper height constraints */}
+          <div className="flex-1 overflow-y-auto min-h-0">
+            <div className="p-4 space-y-6 max-w-full">
+              {/* Doctor dashboard content with fixed heights */}
+              <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
+                <div className="h-[200px] rounded-xl bg-muted/50 flex items-center justify-center">
+                  <span className="text-muted-foreground">Patient Overview</span>
+                </div>
+                <div className="h-[200px] rounded-xl bg-muted/50 flex items-center justify-center">
+                  <span className="text-muted-foreground">Appointments</span>
+                </div>
+                <div className="h-[200px] rounded-xl bg-muted/50 flex items-center justify-center">
+                  <span className="text-muted-foreground">Analytics</span>
+                </div>
+              </div>
+              
+              {/* Main content area */}
+              <div className="h-[400px] rounded-xl bg-muted/50 flex items-center justify-center">
+                <span className="text-muted-foreground">Patient Management Interface</span>
+              </div>
             </div>
-            <div className="min-h-[100vh] flex-1 rounded-xl bg-muted/50 md:min-h-min" />
           </div>
         </SidebarInset>
       </SidebarProvider>

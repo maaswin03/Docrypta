@@ -171,14 +171,14 @@ export function Bloodpressurgraph() {
 
   return (
     <Card className="w-full h-full flex flex-col overflow-hidden">
-      <CardHeader className="pb-2 flex-shrink-0">
+      <CardHeader className="pb-3 flex-shrink-0">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-sm font-medium">Blood Pressure</CardTitle>
-          <Heart className="h-3 w-3 text-red-500" />
+          <CardTitle className="text-base font-medium">Blood Pressure</CardTitle>
+          <Heart className="h-4 w-4 text-red-500" />
         </div>
         <CardDescription className="text-xs">Last 8 records • Format: DD MMM HHPM</CardDescription>
       </CardHeader>
-      <CardContent className="pb-2 flex-1 min-h-0 overflow-hidden">
+      <CardContent className="pb-3 flex-1 min-h-0 overflow-hidden">
         {error ? (
           <div className="flex h-full items-center justify-center text-sm text-red-500">{error}</div>
         ) : chartData.length > 0 ? (
@@ -186,7 +186,7 @@ export function Bloodpressurgraph() {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart 
                 data={chartData} 
-                margin={{ top: 10, right: 5, left: 5, bottom: 25 }}
+                margin={{ top: 20, right: 10, left: 10, bottom: 35 }}
                 barCategoryGap="20%"
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
@@ -194,26 +194,26 @@ export function Bloodpressurgraph() {
                   dataKey="time"
                   tickLine={false}
                   axisLine={false}
-                  tickMargin={4}
-                  tick={{ fontSize: 8 }}
+                  tickMargin={6}
+                  tick={{ fontSize: 10 }}
                   interval={Math.floor(chartData.length / 4)} // Show ~4 labels max
                   angle={-45}
                   textAnchor="end"
-                  height={40}
+                  height={50}
                 />
                 <YAxis 
                   tickLine={false} 
                   axisLine={false} 
-                  tickMargin={4} 
-                  tick={{ fontSize: 8 }} 
+                  tickMargin={6} 
+                  tick={{ fontSize: 10 }} 
                   domain={[40, 160]}
-                  width={30}
+                  width={35}
                 />
                 <Legend
                   verticalAlign="top"
-                  height={15}
+                  height={20}
                   iconType="circle"
-                  iconSize={3}
+                  iconSize={4}
                   formatter={(value) => <span className="text-xs">{value}</span>}
                 />
                 <ChartTooltip
@@ -238,8 +238,8 @@ export function Bloodpressurgraph() {
                     return null
                   }}
                 />
-                <Bar dataKey="systolic" fill="hsl(0, 100%, 65%)" radius={[1, 1, 0, 0]} maxBarSize={15} />
-                <Bar dataKey="diastolic" fill="hsl(215, 100%, 60%)" radius={[1, 1, 0, 0]} maxBarSize={15} />
+                <Bar dataKey="systolic" fill="hsl(0, 100%, 65%)" radius={[2, 2, 0, 0]} maxBarSize={18} />
+                <Bar dataKey="diastolic" fill="hsl(215, 100%, 60%)" radius={[2, 2, 0, 0]} maxBarSize={18} />
               </BarChart>
             </ResponsiveContainer>
           </ChartContainer>
@@ -251,7 +251,7 @@ export function Bloodpressurgraph() {
       </CardContent>
       <CardFooter className="pt-0 flex-shrink-0">
         {averages.systolic !== null && averages.diastolic !== null && (
-          <div className="flex w-full items-center justify-between text-xs">
+          <div className="flex w-full items-center justify-between text-sm">
             <div className="flex flex-col">
               <span className="text-muted-foreground">Avg Systolic</span>
               <span className="font-medium">{averages.systolic} mmHg</span>
