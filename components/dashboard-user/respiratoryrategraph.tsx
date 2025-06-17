@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react"
 import { TreesIcon as Lungs } from "lucide-react"
-import { CartesianGrid, Line, LineChart, XAxis, YAxis, ResponsiveContainer } from "recharts"
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from "recharts"
 import { supabase } from "@/lib/supabaseClient"
 import { LocalStorageService } from "@/lib/localStorage"
 
@@ -157,31 +157,38 @@ export function Respiratoryrategraph() {
   }
 
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-2">
+    <Card className="h-full flex flex-col overflow-hidden">
+      <CardHeader className="pb-3 flex-shrink-0">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-medium">Respiratory Rate</CardTitle>
           <Lungs className="h-4 w-4 text-purple-500" />
         </div>
         <CardDescription className="text-xs">Last 7 records • Format: DD MMM HHPM</CardDescription>
       </CardHeader>
-      <CardContent className="pb-2">
+      <CardContent className="pb-3 flex-1 min-h-0 overflow-hidden">
         {error ? (
-          <div className="flex h-[180px] items-center justify-center text-sm text-red-500">{error}</div>
+          <div className="flex h-full items-center justify-center text-sm text-red-500">{error}</div>
         ) : chartData.length > 0 ? (
-          <ChartContainer config={chartConfig}>
-            <ResponsiveContainer width="100%" height={180}>
-              <LineChart data={chartData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
+          <ChartContainer config={chartConfig} className="h-full w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
                 <XAxis 
                   dataKey="time" 
                   tickLine={false} 
                   axisLine={false} 
-                  tickMargin={8} 
-                  tick={{ fontSize: 9 }}
+                  tickMargin={6} 
+                  tick={{ fontSize: 10 }}
                   interval={Math.floor(chartData.length / 3)} // Show ~3 labels
                 />
-                <YAxis tickLine={false} axisLine={false} tickMargin={8} tick={{ fontSize: 10 }} domain={[8, 25]} />
+                <YAxis 
+                  tickLine={false} 
+                  axisLine={false} 
+                  tickMargin={6} 
+                  tick={{ fontSize: 10 }} 
+                  domain={[8, 25]}
+                  width={35}
+                />
                 <ChartTooltip
                   cursor={false}
                   content={({ active, payload, label }) => {
@@ -202,23 +209,23 @@ export function Respiratoryrategraph() {
                     return null
                   }}
                 />
-                <Line
+                <Area
                   dataKey="respiratory_rate"
                   type="monotone"
+                  fill="hsla(265, 100%, 70%, 0.2)"
                   stroke="hsl(265, 100%, 70%)"
                   strokeWidth={2}
-                  dot={false}
                 />
-              </LineChart>
+              </AreaChart>
             </ResponsiveContainer>
           </ChartContainer>
         ) : (
-          <div className="flex h-[180px] items-center justify-center text-sm text-muted-foreground">
+          <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
             No data available
           </div>
         )}
       </CardContent>
-      <CardFooter className="pt-0">
+      <CardFooter className="pt-0 flex-shrink-0">
         {average !== null && (
           <div className="flex w-full items-center justify-between text-sm">
             <span className="text-muted-foreground">Average</span>
