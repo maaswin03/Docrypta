@@ -69,24 +69,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: "Products",
       url: "/user/products",
       icon: Package,
-      items: [
-        {
-          title: "Health Devices",
-          url: "/user/products/devices",
-        },
-        {
-          title: "Supplements",
-          url: "/user/products/supplements",
-        },
-        {
-          title: "My Orders",
-          url: "/user/products/orders",
-        },
-        {
-          title: "Recommendations",
-          url: "/user/products/recommendations",
-        },
-      ],
     },
     {
       title: "Wallet",
