@@ -59,24 +59,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: "Core Care Plan",
       url: "/user/care-plan",
       icon: HeartHandshake,
-      items: [
-        {
-          title: "My Plan",
-          url: "/user/care-plan/my-plan",
-        },
-        {
-          title: "Goals",
-          url: "/user/care-plan/goals",
-        },
-        {
-          title: "Medications",
-          url: "/user/care-plan/medications",
-        },
-        {
-          title: "Progress",
-          url: "/user/care-plan/progress",
-        },
-      ],
     },
     {
       title: "MediBot",
