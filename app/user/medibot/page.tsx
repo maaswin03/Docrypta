@@ -6,6 +6,7 @@ import { Bot, Send, Trash2, AlertCircle, CheckCircle, Clock, CreditCard } from "
 import { useAuth } from "@/lib/auth-context"
 import { useWallet } from "@/hooks/useWallet"
 import { ProtectedRoute } from "@/components/auth/protected-route"
+import { AppSidebar } from "@/components/sidebar/app-sidebar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,6 +14,19 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { 
+  SidebarInset, 
+  SidebarProvider, 
+  SidebarTrigger 
+} from "@/components/ui/sidebar"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
 import { supabase } from "@/lib/supabaseClient"
 
 interface ChatMessage {
@@ -211,12 +225,15 @@ export default function MedibotPage() {
   if (isLoading) {
     return (
       <ProtectedRoute allowedRoles={['user']}>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="flex flex-col items-center space-y-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            <p className="text-sm text-muted-foreground">Checking subscription...</p>
-          </div>
-        </div>
+        <SidebarProvider>
+          <AppSidebar />
+          <SidebarInset className="flex items-center justify-center h-screen">
+            <div className="flex flex-col items-center space-y-4">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <p className="text-sm text-muted-foreground">Checking subscription...</p>
+            </div>
+          </SidebarInset>
+        </SidebarProvider>
       </ProtectedRoute>
     )
   }
@@ -225,50 +242,73 @@ export default function MedibotPage() {
   if (!subscription) {
     return (
       <ProtectedRoute allowedRoles={['user']}>
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center p-4">
-          <Card className="w-full max-w-md text-center shadow-lg">
-            <CardHeader>
-              <div className="flex justify-center mb-4">
-                <div className="p-3 bg-blue-100 rounded-full">
-                  <Bot className="h-8 w-8 text-blue-600" />
-                </div>
+        <SidebarProvider>
+          <AppSidebar />
+          <SidebarInset className="flex flex-col h-screen overflow-hidden">
+            <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 border-b">
+              <div className="flex items-center gap-2 px-4">
+                <SidebarTrigger className="-ml-1" />
+                <Separator orientation="vertical" className="mr-2 h-4" />
+                <Breadcrumb>
+                  <BreadcrumbList>
+                    <BreadcrumbItem className="hidden md:block">
+                      <BreadcrumbLink href="/user/dashboard">Dashboard</BreadcrumbLink>
+                    </BreadcrumbItem>
+                    <BreadcrumbSeparator className="hidden md:block" />
+                    <BreadcrumbItem>
+                      <BreadcrumbPage>Medibot</BreadcrumbPage>
+                    </BreadcrumbItem>
+                  </BreadcrumbList>
+                </Breadcrumb>
               </div>
-              <CardTitle className="text-xl">Subscription Required</CardTitle>
-              <CardDescription>
-                You need an active subscription to access Medibot
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {error && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{error}</AlertDescription>
-                </Alert>
-              )}
-              
-              <div className="text-sm text-gray-600">
-                <p>Get unlimited AI health queries for just ₹50 (or 0.5 USDC) for 30 days.</p>
-              </div>
-              
-              <div className="space-y-2">
-                <Button 
-                  onClick={() => router.push('/subscribe')}
-                  className="w-full bg-blue-600 hover:bg-blue-700"
-                >
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  Subscribe Now
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={() => router.push('/user/dashboard')}
-                  className="w-full"
-                >
-                  Back to Dashboard
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+            </header>
+            
+            <div className="flex-1 overflow-y-auto min-h-0 bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center p-4">
+              <Card className="w-full max-w-md text-center shadow-lg">
+                <CardHeader>
+                  <div className="flex justify-center mb-4">
+                    <div className="p-3 bg-blue-100 rounded-full">
+                      <Bot className="h-8 w-8 text-blue-600" />
+                    </div>
+                  </div>
+                  <CardTitle className="text-xl">Subscription Required</CardTitle>
+                  <CardDescription>
+                    You need an active subscription to access Medibot
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {error && (
+                    <Alert variant="destructive">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  )}
+                  
+                  <div className="text-sm text-gray-600">
+                    <p>Get unlimited AI health queries for just ₹50 (or 0.5 USDC) for 30 days.</p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Button 
+                      onClick={() => router.push('/subscribe')}
+                      className="w-full bg-blue-600 hover:bg-blue-700"
+                    >
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Subscribe Now
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={() => router.push('/user/dashboard')}
+                      className="w-full"
+                    >
+                      Back to Dashboard
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </SidebarInset>
+        </SidebarProvider>
       </ProtectedRoute>
     )
   }
@@ -276,132 +316,155 @@ export default function MedibotPage() {
   // Show Medibot chat interface
   return (
     <ProtectedRoute allowedRoles={['user']}>
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-green-50">
-        <div className="max-w-4xl mx-auto p-4">
-          {/* Header */}
-          <Card className="mb-4 shadow-sm">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-100 rounded-full">
-                    <Bot className="h-6 w-6 text-blue-600" />
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset className="flex flex-col h-screen overflow-hidden">
+          <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 border-b">
+            <div className="flex items-center gap-2 px-4">
+              <SidebarTrigger className="-ml-1" />
+              <Separator orientation="vertical" className="mr-2 h-4" />
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem className="hidden md:block">
+                    <BreadcrumbLink href="/user/dashboard">Dashboard</BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator className="hidden md:block" />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>Medibot AI Assistant</BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+            </div>
+          </header>
+          
+          <div className="flex-1 overflow-y-auto min-h-0 bg-gradient-to-br from-blue-50 via-white to-green-50">
+            <div className="p-4 max-w-4xl mx-auto h-full flex flex-col">
+              {/* Subscription Status Header */}
+              <Card className="mb-4 shadow-sm flex-shrink-0">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-100 rounded-full">
+                        <Bot className="h-6 w-6 text-blue-600" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-lg">Medibot AI Assistant</CardTitle>
+                        <CardDescription>Your personal health companion</CardDescription>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-2">
+                      <Badge variant="secondary" className="bg-green-100 text-green-700">
+                        <CheckCircle className="h-3 w-3 mr-1" />
+                        Active
+                      </Badge>
+                      <Badge variant="outline">
+                        <Clock className="h-3 w-3 mr-1" />
+                        {getDaysRemaining(subscription.subscription_end)} days left
+                      </Badge>
+                    </div>
                   </div>
-                  <div>
-                    <CardTitle className="text-lg">Medibot AI Assistant</CardTitle>
-                    <CardDescription>Your personal health companion</CardDescription>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <Badge variant="secondary" className="bg-green-100 text-green-700">
-                    <CheckCircle className="h-3 w-3 mr-1" />
-                    Active
-                  </Badge>
-                  <Badge variant="outline">
-                    <Clock className="h-3 w-3 mr-1" />
-                    {getDaysRemaining(subscription.subscription_end)} days left
-                  </Badge>
-                </div>
-              </div>
-            </CardHeader>
-          </Card>
+                </CardHeader>
+              </Card>
 
-          {/* Chat Interface */}
-          <Card className="shadow-lg">
-            <CardHeader className="pb-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-base">Chat with Medibot</CardTitle>
-                  <CardDescription>Ask me anything about health and wellness</CardDescription>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={handleClearChat}
-                  disabled={messages.length <= 1}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Clear Chat
-                </Button>
-              </div>
-            </CardHeader>
-            
-            <Separator />
-            
-            <CardContent className="p-0">
-              {/* Messages */}
-              <ScrollArea className="h-[500px] p-4">
-                <div className="space-y-4">
-                  {messages.map((message) => (
-                    <div
-                      key={message.id}
-                      className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+              {/* Chat Interface */}
+              <Card className="shadow-lg flex-1 flex flex-col overflow-hidden">
+                <CardHeader className="pb-3 flex-shrink-0">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="text-base">Chat with Medibot</CardTitle>
+                      <CardDescription>Ask me anything about health and wellness</CardDescription>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={handleClearChat}
+                      disabled={messages.length <= 1}
                     >
-                      <div
-                        className={`max-w-[80%] rounded-lg p-3 ${
-                          message.type === 'user'
-                            ? 'bg-blue-600 text-white'
-                            : 'bg-gray-100 text-gray-900'
-                        }`}
-                      >
-                        <div className="text-sm">{message.content}</div>
-                        <div
-                          className={`text-xs mt-1 ${
-                            message.type === 'user' ? 'text-blue-100' : 'text-gray-500'
-                          }`}
-                        >
-                          {formatDate(message.timestamp)}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  
-                  {isTyping && (
-                    <div className="flex justify-start">
-                      <div className="bg-gray-100 rounded-lg p-3">
-                        <div className="flex items-center space-x-1">
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                          <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div ref={messagesEndRef} />
-                </div>
-              </ScrollArea>
-              
-              <Separator />
-              
-              {/* Input */}
-              <div className="p-4">
-                <div className="flex gap-2">
-                  <Input
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    placeholder="Ask me about symptoms, health tips, or wellness advice..."
-                    onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                    disabled={isTyping}
-                    className="flex-1"
-                  />
-                  <Button 
-                    onClick={handleSendMessage}
-                    disabled={!inputValue.trim() || isTyping}
-                    className="bg-blue-600 hover:bg-blue-700"
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Clear Chat
+                    </Button>
+                  </div>
+                </CardHeader>
                 
-                <div className="mt-2 text-xs text-gray-500">
-                  <strong>Disclaimer:</strong> Medibot provides general health information and should not replace professional medical advice.
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+                <Separator />
+                
+                <CardContent className="p-0 flex-1 flex flex-col overflow-hidden">
+                  {/* Messages */}
+                  <ScrollArea className="flex-1 p-4">
+                    <div className="space-y-4">
+                      {messages.map((message) => (
+                        <div
+                          key={message.id}
+                          className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
+                        >
+                          <div
+                            className={`max-w-[80%] rounded-lg p-3 ${
+                              message.type === 'user'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-gray-100 text-gray-900'
+                            }`}
+                          >
+                            <div className="text-sm">{message.content}</div>
+                            <div
+                              className={`text-xs mt-1 ${
+                                message.type === 'user' ? 'text-blue-100' : 'text-gray-500'
+                              }`}
+                            >
+                              {formatDate(message.timestamp)}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {isTyping && (
+                        <div className="flex justify-start">
+                          <div className="bg-gray-100 rounded-lg p-3">
+                            <div className="flex items-center space-x-1">
+                              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div ref={messagesEndRef} />
+                    </div>
+                  </ScrollArea>
+                  
+                  <Separator />
+                  
+                  {/* Input */}
+                  <div className="p-4 flex-shrink-0">
+                    <div className="flex gap-2">
+                      <Input
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        placeholder="Ask me about symptoms, health tips, or wellness advice..."
+                        onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                        disabled={isTyping}
+                        className="flex-1"
+                      />
+                      <Button 
+                        onClick={handleSendMessage}
+                        disabled={!inputValue.trim() || isTyping}
+                        className="bg-blue-600 hover:bg-blue-700"
+                      >
+                        <Send className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    
+                    <div className="mt-2 text-xs text-gray-500">
+                      <strong>Disclaimer:</strong> Medibot provides general health information and should not replace professional medical advice.
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
     </ProtectedRoute>
   )
 }
