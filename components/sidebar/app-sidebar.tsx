@@ -54,24 +54,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: "Doctor Connect",
       url: "/user/doctors",
       icon: Stethoscope,
-      items: [
-        {
-          title: "Find Doctors",
-          url: "/user/doctors/find",
-        },
-        {
-          title: "My Doctors",
-          url: "/user/doctors/my-doctors",
-        },
-        {
-          title: "Appointments",
-          url: "/user/doctors/appointments",
-        },
-        {
-          title: "Consultations",
-          url: "/user/doctors/consultations",
-        },
-      ],
     },
     {
       title: "Core Care Plan",
