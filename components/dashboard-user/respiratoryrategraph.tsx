@@ -18,41 +18,68 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-// Helper function to format timestamp to DDMMMHH in UTC
-const formatToDDMMMHH = (timestamp: string) => {
-  const date = new Date(timestamp)
-  const day = date.getUTCDate().toString().padStart(2, "0")
-  const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
-  const month = months[date.getUTCMonth()]
-  const hour = date.getUTCHours().toString().padStart(2, "0")
-  return `${day}${month}${hour}`
+// Helper function to format timestamp to DD MMM HH format
+const formatToDisplayTime = (timestamp: string) => {
+  try {
+    const date = new Date(timestamp)
+    if (isNaN(date.getTime())) return 'Invalid Date'
+    
+    const day = date.getUTCDate().toString().padStart(2, "0")
+    const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
+    const month = months[date.getUTCMonth()]
+    const hour = date.getUTCHours()
+    
+    // Convert 24hr to 12hr format
+    const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
+    const ampm = hour >= 12 ? 'PM' : 'AM'
+    
+    return `${day} ${month} ${hour12.toString().padStart(2, "0")}${ampm}`
+  } catch (error) {
+    console.error('Error formatting timestamp:', timestamp, error)
+    return 'Invalid Date'
+  }
 }
 
-// Helper function to format timestamp to a readable time format
-const formatReadableTime = (timestamp: string) => {
-  const date = new Date(timestamp)
-  return date.toLocaleString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-    timeZone: "UTC",
-  })
+// Helper function for detailed tooltip time
+const formatDetailedTime = (timestamp: string) => {
+  try {
+    const date = new Date(timestamp)
+    if (isNaN(date.getTime())) return 'Invalid Date'
+    
+    const day = date.getUTCDate().toString().padStart(2, "0")
+    const month = (date.getUTCMonth() + 1).toString().padStart(2, "0")
+    const year = date.getUTCFullYear()
+    const hour = date.getUTCHours()
+    const minute = date.getUTCMinutes().toString().padStart(2, "0")
+    
+    // Convert to 12hr format
+    const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
+    const ampm = hour >= 12 ? 'PM' : 'AM'
+    
+    return `${day}/${month}/${year} ${hour12.toString().padStart(2, "0")}:${minute} ${ampm}`
+  } catch (error) {
+    console.error('Error formatting detailed timestamp:', timestamp, error)
+    return 'Invalid Date'
+  }
 }
 
 export function Respiratoryrategraph() {
   const [chartData, setChartData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [average, setAverage] = useState<number | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchRespiratoryRateData = async () => {
       try {
+        setError(null)
         const userId = LocalStorageService.getUserId()
         const deviceId = LocalStorageService.getDeviceId()
 
+        console.log("Fetching Respiratory Rate data for user:", userId, "device:", deviceId)
+
         if (!userId) {
-          console.error("No user ID found in localStorage")
+          setError("No user ID found in localStorage")
           setLoading(false)
           return
         }
@@ -73,10 +100,14 @@ export function Respiratoryrategraph() {
 
         if (error) {
           console.error("Error fetching respiratory rate data:", error)
+          setError("Error fetching respiratory rate data: " + error.message)
           return
         }
 
+        console.log("Respiratory rate data found:", data?.length || 0, "records")
+
         if (!data || data.length === 0) {
+          setError("No respiratory rate data found in last 7 records")
           setLoading(false)
           return
         }
@@ -84,15 +115,17 @@ export function Respiratoryrategraph() {
         // Reverse to show chronological order in chart
         const reversedData = data.reverse()
 
-        const formattedData = reversedData.map((item) => {
-          console.log("Original timestamp:", item.timestamp) // Debugging
+        const formattedData = reversedData.map((item, index) => {
+          console.log(`Processing respiratory rate record ${index + 1}:`, item.timestamp)
           return {
-            time: formatToDDMMMHH(item.timestamp),
-            respiratory_rate: item.respiratory_rate,
-            fullTime: formatReadableTime(item.timestamp),
-            originalTimestamp: item.timestamp, // Store original timestamp
+            time: formatToDisplayTime(item.timestamp),
+            respiratory_rate: Number(item.respiratory_rate),
+            fullTime: formatDetailedTime(item.timestamp),
+            originalTimestamp: item.timestamp,
           }
         })
+
+        console.log("Formatted respiratory rate data:", formattedData)
 
         // Calculate average respiratory rate
         const sum = data.reduce((acc, item) => acc + Number(item.respiratory_rate), 0)
@@ -100,8 +133,10 @@ export function Respiratoryrategraph() {
         setAverage(avg)
 
         setChartData(formattedData)
+        setError(null)
       } catch (error) {
         console.error("Error:", error)
+        setError("Unexpected error: " + (error as Error).message)
       } finally {
         setLoading(false)
       }
@@ -128,15 +163,24 @@ export function Respiratoryrategraph() {
           <CardTitle className="text-base font-medium">Respiratory Rate</CardTitle>
           <Lungs className="h-4 w-4 text-purple-500" />
         </div>
-        <CardDescription className="text-xs">Last 7 records • Format: DDMMMHH</CardDescription>
+        <CardDescription className="text-xs">Last 7 records • Format: DD MMM HHPM</CardDescription>
       </CardHeader>
       <CardContent className="pb-2">
-        {chartData.length > 0 ? (
+        {error ? (
+          <div className="flex h-[180px] items-center justify-center text-sm text-red-500">{error}</div>
+        ) : chartData.length > 0 ? (
           <ChartContainer config={chartConfig}>
             <ResponsiveContainer width="100%" height={180}>
               <LineChart data={chartData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
-                <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} tick={{ fontSize: 10 }} />
+                <XAxis 
+                  dataKey="time" 
+                  tickLine={false} 
+                  axisLine={false} 
+                  tickMargin={8} 
+                  tick={{ fontSize: 9 }}
+                  interval={Math.floor(chartData.length / 3)} // Show ~3 labels
+                />
                 <YAxis tickLine={false} axisLine={false} tickMargin={8} tick={{ fontSize: 10 }} domain={[8, 25]} />
                 <ChartTooltip
                   cursor={false}
@@ -147,11 +191,10 @@ export function Respiratoryrategraph() {
                         <div className="rounded-lg border bg-background p-2 shadow-sm">
                           <div className="flex flex-col">
                             <span className="text-[0.70rem] uppercase text-muted-foreground">Time</span>
-                            <span className="font-bold">{data.fullTime} (UTC)</span> {/* Show formatted time in UTC */}
+                            <span className="font-bold">{data.fullTime}</span>
                             <span className="text-[0.70rem] uppercase text-muted-foreground">Respiratory Rate</span>
                             <span className="font-bold text-purple-600">{data.respiratory_rate} breaths/min</span>
-                            <span className="text-[0.70rem] uppercase text-muted-foreground">Original Timestamp</span>
-                            <span className="font-bold">{data.originalTimestamp}</span> {/* Show original timestamp */}
+                            <span className="text-[0.60rem] text-muted-foreground">Original: {data.originalTimestamp}</span>
                           </div>
                         </div>
                       )

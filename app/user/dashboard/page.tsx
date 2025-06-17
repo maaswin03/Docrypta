@@ -47,30 +47,33 @@ export default function Page() {
               </Breadcrumb>
             </div>
           </header>
-          <div className="flex flex-1 flex-col gap-4 p-4 pt-0 max-w-full overflow-hidden">
+          <div className="flex flex-1 flex-col gap-4 p-4 pt-0 w-full overflow-hidden">
             {/* Latest Vitals Summary */}
             <LatestVitalsSummary />
 
-            <Ecggraph />
+            {/* ECG Graph - Full width */}
+            <div className="w-full">
+              <Ecggraph />
+            </div>
 
-            {/* Main vitals - Responsive grid */}
-            <div className="grid gap-4 grid-cols-1  md:grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-2">
-              <div className="min-w-0">
+            {/* Main vitals - Responsive grid with proper constraints */}
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-2 w-full">
+              <div className="w-full min-w-0">
                 <Heartgraph />
               </div>
-              <div className="min-w-0">
+              <div className="w-full min-w-0">
                 <Spo2graph />
               </div>
-              <div className="min-w-0">
+              <div className="w-full min-w-0">
                 <Temperaturegraph />
               </div>
-              <div className="min-w-0">
+              <div className="w-full min-w-0">
                 <Respiratoryrategraph />
               </div>
-              <div className="min-w-0">
+              <div className="w-full min-w-0">
                 <Glucosegraph />
               </div>
-              <div className="min-w-0">
+              <div className="w-full min-w-0">
                 <Activitylevelgraph />
               </div>
             </div>

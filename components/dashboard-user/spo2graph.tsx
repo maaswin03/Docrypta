@@ -18,36 +18,68 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-// Helper function to format timestamp to DDMMMHH - treating as UTC to avoid timezone issues
-const formatToDDMMMHH = (timestamp: string) => {
-  // Parse the timestamp as UTC to avoid timezone conversion
-  const date = new Date(timestamp + "Z") // Adding Z forces UTC parsing
-  const day = date.getUTCDate().toString().padStart(2, "0")
-  const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
-  const month = months[date.getUTCMonth()]
-  const hour = date.getUTCHours().toString().padStart(2, "0")
-  return `${day}${month}${hour}`
+// Helper function to format timestamp to DD MMM HH format
+const formatToDisplayTime = (timestamp: string) => {
+  try {
+    const date = new Date(timestamp)
+    if (isNaN(date.getTime())) return 'Invalid Date'
+    
+    const day = date.getUTCDate().toString().padStart(2, "0")
+    const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
+    const month = months[date.getUTCMonth()]
+    const hour = date.getUTCHours()
+    
+    // Convert 24hr to 12hr format
+    const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
+    const ampm = hour >= 12 ? 'PM' : 'AM'
+    
+    return `${day} ${month} ${hour12.toString().padStart(2, "0")}${ampm}`
+  } catch (error) {
+    console.error('Error formatting timestamp:', timestamp, error)
+    return 'Invalid Date'
+  }
 }
 
-// Helper function for readable tooltip time
-const formatReadableTime = (timestamp: string) => {
-  const date = new Date(timestamp + "Z")
-  return `${date.getUTCDate().toString().padStart(2, "0")}/${(date.getUTCMonth() + 1).toString().padStart(2, "0")} ${date.getUTCHours().toString().padStart(2, "0")}:${date.getUTCMinutes().toString().padStart(2, "0")}`
+// Helper function for detailed tooltip time
+const formatDetailedTime = (timestamp: string) => {
+  try {
+    const date = new Date(timestamp)
+    if (isNaN(date.getTime())) return 'Invalid Date'
+    
+    const day = date.getUTCDate().toString().padStart(2, "0")
+    const month = (date.getUTCMonth() + 1).toString().padStart(2, "0")
+    const year = date.getUTCFullYear()
+    const hour = date.getUTCHours()
+    const minute = date.getUTCMinutes().toString().padStart(2, "0")
+    
+    // Convert to 12hr format
+    const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
+    const ampm = hour >= 12 ? 'PM' : 'AM'
+    
+    return `${day}/${month}/${year} ${hour12.toString().padStart(2, "0")}:${minute} ${ampm}`
+  } catch (error) {
+    console.error('Error formatting detailed timestamp:', timestamp, error)
+    return 'Invalid Date'
+  }
 }
 
 export function Spo2graph() {
   const [chartData, setChartData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [average, setAverage] = useState<number | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchSpo2Data = async () => {
       try {
+        setError(null)
         const userId = LocalStorageService.getUserId()
         const deviceId = LocalStorageService.getDeviceId()
 
+        console.log("Fetching SpO2 data for user:", userId, "device:", deviceId)
+
         if (!userId) {
-          console.error("No user ID found in localStorage")
+          setError("No user ID found in localStorage")
           setLoading(false)
           return
         }
@@ -68,28 +100,30 @@ export function Spo2graph() {
 
         if (error) {
           console.error("Error fetching SpO2 data:", error)
+          setError("Error fetching SpO2 data: " + error.message)
           return
         }
 
+        console.log("SpO2 data found:", data?.length || 0, "records")
+
         if (!data || data.length === 0) {
+          setError("No SpO2 data found in last 7 records")
           setLoading(false)
           return
         }
 
-        console.log(
-          "SpO2 data timestamps:",
-          data.map((d) => d.timestamp),
-        )
-
         // Reverse to show chronological order in chart
         const reversedData = data.reverse()
 
-        const formattedData = reversedData.map((item) => ({
-          time: formatToDDMMMHH(item.timestamp),
-          spo2: item.spo2,
-          fullTime: formatReadableTime(item.timestamp),
-          originalTimestamp: item.timestamp,
-        }))
+        const formattedData = reversedData.map((item, index) => {
+          console.log(`Processing SpO2 record ${index + 1}:`, item.timestamp)
+          return {
+            time: formatToDisplayTime(item.timestamp),
+            spo2: Number(item.spo2),
+            fullTime: formatDetailedTime(item.timestamp),
+            originalTimestamp: item.timestamp,
+          }
+        })
 
         console.log("Formatted SpO2 data:", formattedData)
 
@@ -99,8 +133,10 @@ export function Spo2graph() {
         setAverage(avg)
 
         setChartData(formattedData)
+        setError(null)
       } catch (error) {
         console.error("Error:", error)
+        setError("Unexpected error: " + (error as Error).message)
       } finally {
         setLoading(false)
       }
@@ -127,15 +163,24 @@ export function Spo2graph() {
           <CardTitle className="text-base font-medium">SpO2 Levels</CardTitle>
           <Droplets className="h-4 w-4 text-red-500" />
         </div>
-        <CardDescription className="text-xs">Last 7 records • Format: DDMMMHH</CardDescription>
+        <CardDescription className="text-xs">Last 7 records • Format: DD MMM HHPM</CardDescription>
       </CardHeader>
       <CardContent className="pb-2">
-        {chartData.length > 0 ? (
+        {error ? (
+          <div className="flex h-[180px] items-center justify-center text-sm text-red-500">{error}</div>
+        ) : chartData.length > 0 ? (
           <ChartContainer config={chartConfig}>
             <ResponsiveContainer width="100%" height={180}>
               <LineChart data={chartData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
-                <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} tick={{ fontSize: 10 }} />
+                <XAxis 
+                  dataKey="time" 
+                  tickLine={false} 
+                  axisLine={false} 
+                  tickMargin={8} 
+                  tick={{ fontSize: 9 }}
+                  interval={Math.floor(chartData.length / 3)} // Show ~3 labels
+                />
                 <YAxis tickLine={false} axisLine={false} tickMargin={8} tick={{ fontSize: 10 }} domain={[90, 100]} />
                 <ChartTooltip
                   cursor={false}
@@ -149,7 +194,7 @@ export function Spo2graph() {
                             <span className="font-bold">{data.fullTime}</span>
                             <span className="text-[0.70rem] uppercase text-muted-foreground">SpO2</span>
                             <span className="font-bold text-red-600">{data.spo2}%</span>
-                            <span className="text-[0.60rem] text-muted-foreground">({data.originalTimestamp})</span>
+                            <span className="text-[0.60rem] text-muted-foreground">Original: {data.originalTimestamp}</span>
                           </div>
                         </div>
                       )

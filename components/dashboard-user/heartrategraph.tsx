@@ -18,36 +18,74 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-// Helper function to format timestamp to DDMMMHH - treating as UTC to avoid timezone issues
-const formatToDDMMMHH = (timestamp: string) => {
-  // Parse the timestamp as UTC to avoid timezone conversion
-  const date = new Date(timestamp + "Z") // Adding Z forces UTC parsing
-  const day = date.getUTCDate().toString().padStart(2, "0")
-  const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
-  const month = months[date.getUTCMonth()]
-  const hour = date.getUTCHours().toString().padStart(2, "0")
-  return `${day}${month}${hour}`
+// Helper function to format timestamp to DD MMM HH format
+const formatToDisplayTime = (timestamp: string) => {
+  try {
+    // Parse the timestamp directly without timezone conversion
+    const date = new Date(timestamp)
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      console.error('Invalid timestamp:', timestamp)
+      return 'Invalid Date'
+    }
+    
+    const day = date.getUTCDate().toString().padStart(2, "0")
+    const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
+    const month = months[date.getUTCMonth()]
+    const hour = date.getUTCHours()
+    
+    // Convert 24hr to 12hr format
+    const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
+    const ampm = hour >= 12 ? 'PM' : 'AM'
+    
+    return `${day} ${month} ${hour12.toString().padStart(2, "0")}${ampm}`
+  } catch (error) {
+    console.error('Error formatting timestamp:', timestamp, error)
+    return 'Invalid Date'
+  }
 }
 
-// Helper function for readable tooltip time
-const formatReadableTime = (timestamp: string) => {
-  const date = new Date(timestamp + "Z")
-  return `${date.getUTCDate().toString().padStart(2, "0")}/${(date.getUTCMonth() + 1).toString().padStart(2, "0")} ${date.getUTCHours().toString().padStart(2, "0")}:${date.getUTCMinutes().toString().padStart(2, "0")}`
+// Helper function for detailed tooltip time
+const formatDetailedTime = (timestamp: string) => {
+  try {
+    const date = new Date(timestamp)
+    if (isNaN(date.getTime())) return 'Invalid Date'
+    
+    const day = date.getUTCDate().toString().padStart(2, "0")
+    const month = (date.getUTCMonth() + 1).toString().padStart(2, "0")
+    const year = date.getUTCFullYear()
+    const hour = date.getUTCHours()
+    const minute = date.getUTCMinutes().toString().padStart(2, "0")
+    
+    // Convert to 12hr format
+    const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
+    const ampm = hour >= 12 ? 'PM' : 'AM'
+    
+    return `${day}/${month}/${year} ${hour12.toString().padStart(2, "0")}:${minute} ${ampm}`
+  } catch (error) {
+    console.error('Error formatting detailed timestamp:', timestamp, error)
+    return 'Invalid Date'
+  }
 }
 
 export function Heartgraph() {
   const [chartData, setChartData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [average, setAverage] = useState<number | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchHeartRateData = async () => {
       try {
+        setError(null)
         const userId = LocalStorageService.getUserId()
         const deviceId = LocalStorageService.getDeviceId()
 
+        console.log("Fetching Heart Rate data for user:", userId, "device:", deviceId)
+
         if (!userId) {
-          console.error("No user ID found in localStorage")
+          setError("No user ID found in localStorage")
           setLoading(false)
           return
         }
@@ -68,28 +106,30 @@ export function Heartgraph() {
 
         if (error) {
           console.error("Error fetching heart rate data:", error)
+          setError("Error fetching heart rate data: " + error.message)
           return
         }
 
+        console.log("Heart rate data found:", data?.length || 0, "records")
+
         if (!data || data.length === 0) {
+          setError("No heart rate data found in last 7 records")
           setLoading(false)
           return
         }
 
-        console.log(
-          "Heart rate data timestamps:",
-          data.map((d) => d.timestamp),
-        )
-
         // Reverse to show chronological order in chart
         const reversedData = data.reverse()
 
-        const formattedData = reversedData.map((item) => ({
-          time: formatToDDMMMHH(item.timestamp),
-          heart_rate: item.heart_rate,
-          fullTime: formatReadableTime(item.timestamp),
-          originalTimestamp: item.timestamp,
-        }))
+        const formattedData = reversedData.map((item, index) => {
+          console.log(`Processing heart rate record ${index + 1}:`, item.timestamp)
+          return {
+            time: formatToDisplayTime(item.timestamp),
+            heart_rate: Number(item.heart_rate),
+            fullTime: formatDetailedTime(item.timestamp),
+            originalTimestamp: item.timestamp,
+          }
+        })
 
         console.log("Formatted heart rate data:", formattedData)
 
@@ -99,8 +139,10 @@ export function Heartgraph() {
         setAverage(avg)
 
         setChartData(formattedData)
+        setError(null)
       } catch (error) {
         console.error("Error:", error)
+        setError("Unexpected error: " + (error as Error).message)
       } finally {
         setLoading(false)
       }
@@ -127,15 +169,24 @@ export function Heartgraph() {
           <CardTitle className="text-base font-medium">Heart Rate</CardTitle>
           <Activity className="h-4 w-4 text-blue-500" />
         </div>
-        <CardDescription className="text-xs">Last 7 records • Format: DDMMMHH</CardDescription>
+        <CardDescription className="text-xs">Last 7 records • Format: DD MMM HHPM</CardDescription>
       </CardHeader>
       <CardContent className="pb-2">
-        {chartData.length > 0 ? (
+        {error ? (
+          <div className="flex h-[180px] items-center justify-center text-sm text-red-500">{error}</div>
+        ) : chartData.length > 0 ? (
           <ChartContainer config={chartConfig}>
             <ResponsiveContainer width="100%" height={180}>
               <AreaChart data={chartData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
-                <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} tick={{ fontSize: 10 }} />
+                <XAxis 
+                  dataKey="time" 
+                  tickLine={false} 
+                  axisLine={false} 
+                  tickMargin={8} 
+                  tick={{ fontSize: 9 }}
+                  interval={Math.floor(chartData.length / 3)} // Show ~3 labels
+                />
                 <YAxis
                   tickLine={false}
                   axisLine={false}
@@ -153,9 +204,9 @@ export function Heartgraph() {
                           <div className="flex flex-col">
                             <span className="text-[0.70rem] uppercase text-muted-foreground">Time</span>
                             <span className="font-bold">{data.fullTime}</span>
-                            <span className="text-[0.60rem] text-muted-foreground">({data.originalTimestamp})</span>
                             <span className="text-[0.70rem] uppercase text-muted-foreground">Heart Rate</span>
                             <span className="font-bold text-blue-600">{data.heart_rate} BPM</span>
+                            <span className="text-[0.60rem] text-muted-foreground">Original: {data.originalTimestamp}</span>
                           </div>
                         </div>
                       )

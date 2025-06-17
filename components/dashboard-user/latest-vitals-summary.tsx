@@ -27,29 +27,44 @@ interface LatestVitals {
   timestamp?: string
 }
 
-// Helper function to format timestamp to DDMMMHH - treating as UTC to avoid timezone issues
-const formatToDDMMMHH = (timestamp: string) => {
-  // Parse the timestamp as UTC to avoid timezone conversion
-  const date = new Date(timestamp + "Z") // Adding Z forces UTC parsing
-  const day = date.getUTCDate().toString().padStart(2, "0")
-  const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
-  const month = months[date.getUTCMonth()]
-  const hour = date.getUTCHours().toString().padStart(2, "0")
-  return `${day}${month}${hour}`
+// Helper function to format timestamp to DD MMM HH format
+const formatToDisplayTime = (timestamp: string) => {
+  try {
+    const date = new Date(timestamp)
+    if (isNaN(date.getTime())) return 'Invalid Date'
+    
+    const day = date.getUTCDate().toString().padStart(2, "0")
+    const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
+    const month = months[date.getUTCMonth()]
+    const hour = date.getUTCHours()
+    
+    // Convert 24hr to 12hr format
+    const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
+    const ampm = hour >= 12 ? 'PM' : 'AM'
+    
+    return `${day} ${month} ${hour12.toString().padStart(2, "0")}${ampm}`
+  } catch (error) {
+    console.error('Error formatting timestamp:', timestamp, error)
+    return 'Invalid Date'
+  }
 }
 
 export function LatestVitalsSummary() {
   const [latestVitals, setLatestVitals] = useState<LatestVitals>({})
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchLatestVitals = async () => {
       try {
+        setError(null)
         const userId = LocalStorageService.getUserId()
         const deviceId = LocalStorageService.getDeviceId()
 
+        console.log("Fetching Latest Vitals for user:", userId, "device:", deviceId)
+
         if (!userId) {
-          console.error("No user ID found in localStorage")
+          setError("No user ID found in localStorage")
           setLoading(false)
           return
         }
@@ -69,16 +84,23 @@ export function LatestVitalsSummary() {
 
         if (error) {
           console.error("Error fetching latest vitals:", error)
+          setError("Error fetching latest vitals: " + error.message)
           return
         }
+
+        console.log("Latest vitals data found:", data?.length || 0, "records")
 
         if (data && data.length > 0) {
           setLatestVitals(data[0])
           console.log("Latest vitals timestamp:", data[0].timestamp)
-          console.log("Formatted time:", formatToDDMMMHH(data[0].timestamp))
+          console.log("Formatted time:", formatToDisplayTime(data[0].timestamp))
+          setError(null)
+        } else {
+          setError("No vitals data found")
         }
       } catch (error) {
         console.error("Error:", error)
+        setError("Unexpected error: " + (error as Error).message)
       } finally {
         setLoading(false)
       }
@@ -100,6 +122,19 @@ export function LatestVitalsSummary() {
             </CardContent>
           </Card>
         ))}
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold">Latest Readings</h2>
+        </div>
+        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-600 text-sm">{error}</p>
+        </div>
       </div>
     )
   }
@@ -161,7 +196,7 @@ export function LatestVitalsSummary() {
         <h2 className="text-lg font-semibold">Latest Readings</h2>
         {latestVitals.timestamp && (
           <span className="text-sm text-muted-foreground">
-            Last updated: {formatToDDMMMHH(latestVitals.timestamp)}
+            Last updated: {formatToDisplayTime(latestVitals.timestamp)}
             <span className="ml-2 text-xs">({latestVitals.timestamp})</span>
           </span>
         )}

@@ -32,20 +32,36 @@ const chartConfig = {
     label: "Exercise",
     color: "hsl(300, 100%, 50%)",
   },
+  idle: {
+    label: "Idle",
+    color: "hsl(200, 100%, 50%)",
+  },
   other: {
     label: "Other",
-    color: "hsl(200, 100%, 50%)",
+    color: "hsl(180, 100%, 50%)",
   },
 } satisfies ChartConfig
 
-// Helper function to format timestamp to DDMMMHH in UTC
-const formatToDDMMMHH = (timestamp: string) => {
-  const date = new Date(timestamp)
-  const day = date.getUTCDate().toString().padStart(2, "0")
-  const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
-  const month = months[date.getUTCMonth()]
-  const hour = date.getUTCHours().toString().padStart(2, "0")
-  return `${day}${month}${hour}`
+// Helper function to format timestamp to DD MMM HH format
+const formatToDisplayTime = (timestamp: string) => {
+  try {
+    const date = new Date(timestamp)
+    if (isNaN(date.getTime())) return 'Invalid Date'
+    
+    const day = date.getUTCDate().toString().padStart(2, "0")
+    const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
+    const month = months[date.getUTCMonth()]
+    const hour = date.getUTCHours()
+    
+    // Convert 24hr to 12hr format
+    const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
+    const ampm = hour >= 12 ? 'PM' : 'AM'
+    
+    return `${day} ${month} ${hour12.toString().padStart(2, "0")}${ampm}`
+  } catch (error) {
+    console.error('Error formatting timestamp:', timestamp, error)
+    return 'Invalid Date'
+  }
 }
 
 // Helper function to format numbers in Indian format
@@ -62,7 +78,8 @@ const COLORS = {
   resting: "hsl(120, 100%, 40%)",
   sleeping: "hsl(240, 100%, 60%)",
   exercise: "hsl(300, 100%, 50%)",
-  other: "hsl(200, 100%, 50%)",
+  idle: "hsl(200, 100%, 50%)",
+  other: "hsl(180, 100%, 50%)",
 }
 
 export function Activitylevelgraph() {
@@ -131,11 +148,11 @@ export function Activitylevelgraph() {
         // Reverse to process chronologically
         const reversedData = data.reverse()
 
-        for (const item of reversedData) {
+        for (const [index, item] of reversedData.entries()) {
           const activityData = item.activity_level
 
           if (!activityData) {
-            console.error("No activity data in record:", item)
+            console.error(`No activity data in record ${index + 1}:`, item)
             continue
           }
 
@@ -144,14 +161,14 @@ export function Activitylevelgraph() {
           activityCounts[activityType] = (activityCounts[activityType] || 0) + 1
 
           // Sum totals
-          totalSteps += activityData.steps || 0
-          totalCalories += activityData.calories || 0
-          totalDistance += activityData.distance_km || 0
+          totalSteps += Number(activityData.steps) || 0
+          totalCalories += Number(activityData.calories) || 0
+          totalDistance += Number(activityData.distance_km) || 0
 
           // Track time range
-          console.log("Timestamp before formatting:", item.timestamp) // Debugging
-          if (!earliestTime) earliestTime = formatToDDMMMHH(item.timestamp)
-          latestTime = formatToDDMMMHH(item.timestamp)
+          console.log(`Processing activity record ${index + 1}:`, item.timestamp)
+          if (!earliestTime) earliestTime = formatToDisplayTime(item.timestamp)
+          latestTime = formatToDisplayTime(item.timestamp)
         }
 
         // Convert counts to chart data

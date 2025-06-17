@@ -22,25 +22,49 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-// Helper function to format timestamp to DDMMMHH in UTC
-const formatToDDMMMHH = (timestamp: string) => {
-  const date = new Date(timestamp)
-  const day = date.getUTCDate().toString().padStart(2, "0")
-  const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
-  const month = months[date.getUTCMonth()]
-  const hour = date.getUTCHours().toString().padStart(2, "0")
-  return `${day}${month}${hour}`
+// Helper function to format timestamp to DD MMM HH format
+const formatToDisplayTime = (timestamp: string) => {
+  try {
+    const date = new Date(timestamp)
+    if (isNaN(date.getTime())) return 'Invalid Date'
+    
+    const day = date.getUTCDate().toString().padStart(2, "0")
+    const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
+    const month = months[date.getUTCMonth()]
+    const hour = date.getUTCHours()
+    
+    // Convert 24hr to 12hr format
+    const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
+    const ampm = hour >= 12 ? 'PM' : 'AM'
+    
+    return `${day} ${month} ${hour12.toString().padStart(2, "0")}${ampm}`
+  } catch (error) {
+    console.error('Error formatting timestamp:', timestamp, error)
+    return 'Invalid Date'
+  }
 }
 
-// Helper function to format timestamp to a readable time format
-const formatReadableTime = (timestamp: string) => {
-  const date = new Date(timestamp)
-  return date.toLocaleString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  })
+// Helper function for detailed tooltip time
+const formatDetailedTime = (timestamp: string) => {
+  try {
+    const date = new Date(timestamp)
+    if (isNaN(date.getTime())) return 'Invalid Date'
+    
+    const day = date.getUTCDate().toString().padStart(2, "0")
+    const month = (date.getUTCMonth() + 1).toString().padStart(2, "0")
+    const year = date.getUTCFullYear()
+    const hour = date.getUTCHours()
+    const minute = date.getUTCMinutes().toString().padStart(2, "0")
+    
+    // Convert to 12hr format
+    const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
+    const ampm = hour >= 12 ? 'PM' : 'AM'
+    
+    return `${day}/${month}/${year} ${hour12.toString().padStart(2, "0")}:${minute} ${ampm}`
+  } catch (error) {
+    console.error('Error formatting detailed timestamp:', timestamp, error)
+    return 'Invalid Date'
+  }
 }
 
 export function Bloodpressurgraph() {
@@ -50,15 +74,19 @@ export function Bloodpressurgraph() {
     systolic: null,
     diastolic: null,
   })
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchBloodPressureData = async () => {
       try {
+        setError(null)
         const userId = LocalStorageService.getUserId()
         const deviceId = LocalStorageService.getDeviceId()
 
+        console.log("Fetching Blood Pressure data for user:", userId, "device:", deviceId)
+
         if (!userId) {
-          console.error("No user ID found in localStorage")
+          setError("No user ID found in localStorage")
           setLoading(false)
           return
         }
@@ -80,10 +108,14 @@ export function Bloodpressurgraph() {
 
         if (error) {
           console.error("Error fetching blood pressure data:", error)
+          setError("Error fetching blood pressure data: " + error.message)
           return
         }
 
+        console.log("Blood pressure data found:", data?.length || 0, "records")
+
         if (!data || data.length === 0) {
+          setError("No blood pressure data found in last 24 records")
           setLoading(false)
           return
         }
@@ -91,16 +123,18 @@ export function Bloodpressurgraph() {
         // Reverse to show chronological order in chart
         const reversedData = data.reverse()
 
-        const formattedData = reversedData.map((item) => {
-          console.log("Original timestamp:", item.timestamp) // Debugging
+        const formattedData = reversedData.map((item, index) => {
+          console.log(`Processing blood pressure record ${index + 1}:`, item.timestamp)
           return {
-            time: formatToDDMMMHH(item.timestamp),
+            time: formatToDisplayTime(item.timestamp),
             systolic: Number(item.systolic_bp),
             diastolic: Number(item.diastolic_bp),
-            fullTime: formatReadableTime(item.timestamp),
-            originalTimestamp: item.timestamp, // Store original timestamp
+            fullTime: formatDetailedTime(item.timestamp),
+            originalTimestamp: item.timestamp,
           }
         })
+
+        console.log("Formatted blood pressure data:", formattedData)
 
         // Calculate averages
         const systolicSum = data.reduce((acc, item) => acc + Number(item.systolic_bp), 0)
@@ -112,8 +146,10 @@ export function Bloodpressurgraph() {
         })
 
         setChartData(formattedData)
+        setError(null)
       } catch (error) {
         console.error("Error:", error)
+        setError("Unexpected error: " + (error as Error).message)
       } finally {
         setLoading(false)
       }
@@ -134,16 +170,18 @@ export function Bloodpressurgraph() {
   }
 
   return (
-    <Card>
+    <Card className="w-full">
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-medium">Blood Pressure</CardTitle>
           <Heart className="h-4 w-4 text-red-500" />
         </div>
-        <CardDescription className="text-xs">Last 24 records • Format: DDMMMHH</CardDescription>
+        <CardDescription className="text-xs">Last 24 records • Format: DD MMM HHPM</CardDescription>
       </CardHeader>
       <CardContent className="pb-2">
-        {chartData.length > 0 ? (
+        {error ? (
+          <div className="flex h-[200px] items-center justify-center text-sm text-red-500">{error}</div>
+        ) : chartData.length > 0 ? (
           <ChartContainer config={chartConfig}>
             <ResponsiveContainer width="100%" height={200}>
               <BarChart data={chartData} margin={{ top: 15, right: 5, left: 0, bottom: 5 }}>
@@ -178,8 +216,7 @@ export function Bloodpressurgraph() {
                             <span className="font-bold text-red-600">
                               {data.systolic}/{data.diastolic} mmHg
                             </span>
-                            <span className="text-[0.70rem] uppercase text-muted-foreground">Timestamp</span>
-                            <span className="font-bold">{data.originalTimestamp}</span>
+                            <span className="text-[0.60rem] text-muted-foreground">Original: {data.originalTimestamp}</span>
                           </div>
                         </div>
                       )

@@ -18,40 +18,68 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
-// Helper function to format timestamp to DDMMMHH in UTC
-const formatToDDMMMHH = (timestamp: string) => {
-  const date = new Date(timestamp)
-  const day = date.getUTCDate().toString().padStart(2, "0")
-  const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
-  const month = months[date.getUTCMonth()]
-  const hour = date.getUTCHours().toString().padStart(2, "0")
-  return `${day}${month}${hour}`
+// Helper function to format timestamp to DD MMM HH format
+const formatToDisplayTime = (timestamp: string) => {
+  try {
+    const date = new Date(timestamp)
+    if (isNaN(date.getTime())) return 'Invalid Date'
+    
+    const day = date.getUTCDate().toString().padStart(2, "0")
+    const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
+    const month = months[date.getUTCMonth()]
+    const hour = date.getUTCHours()
+    
+    // Convert 24hr to 12hr format
+    const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
+    const ampm = hour >= 12 ? 'PM' : 'AM'
+    
+    return `${day} ${month} ${hour12.toString().padStart(2, "0")}${ampm}`
+  } catch (error) {
+    console.error('Error formatting timestamp:', timestamp, error)
+    return 'Invalid Date'
+  }
 }
 
-// Helper function to format timestamp to readable time in local timezone
-const formatReadableTime = (timestamp: string) => {
-  const date = new Date(timestamp)
-  return date.toLocaleString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  })
+// Helper function for detailed tooltip time
+const formatDetailedTime = (timestamp: string) => {
+  try {
+    const date = new Date(timestamp)
+    if (isNaN(date.getTime())) return 'Invalid Date'
+    
+    const day = date.getUTCDate().toString().padStart(2, "0")
+    const month = (date.getUTCMonth() + 1).toString().padStart(2, "0")
+    const year = date.getUTCFullYear()
+    const hour = date.getUTCHours()
+    const minute = date.getUTCMinutes().toString().padStart(2, "0")
+    
+    // Convert to 12hr format
+    const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
+    const ampm = hour >= 12 ? 'PM' : 'AM'
+    
+    return `${day}/${month}/${year} ${hour12.toString().padStart(2, "0")}:${minute} ${ampm}`
+  } catch (error) {
+    console.error('Error formatting detailed timestamp:', timestamp, error)
+    return 'Invalid Date'
+  }
 }
 
 export function Temperaturegraph() {
   const [chartData, setChartData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [average, setAverage] = useState<number | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchTemperatureData = async () => {
       try {
+        setError(null)
         const userId = LocalStorageService.getUserId()
         const deviceId = LocalStorageService.getDeviceId()
 
+        console.log("Fetching Temperature data for user:", userId, "device:", deviceId)
+
         if (!userId) {
-          console.error("No user ID found in localStorage")
+          setError("No user ID found in localStorage")
           setLoading(false)
           return
         }
@@ -72,10 +100,14 @@ export function Temperaturegraph() {
 
         if (error) {
           console.error("Error fetching temperature data:", error)
+          setError("Error fetching temperature data: " + error.message)
           return
         }
 
+        console.log("Temperature data found:", data?.length || 0, "records")
+
         if (!data || data.length === 0) {
+          setError("No temperature data found in last 7 records")
           setLoading(false)
           return
         }
@@ -83,15 +115,17 @@ export function Temperaturegraph() {
         // Reverse to show chronological order in chart
         const reversedData = data.reverse()
 
-        const formattedData = reversedData.map((item) => {
-          console.log("Original timestamp:", item.timestamp) // Debugging
+        const formattedData = reversedData.map((item, index) => {
+          console.log(`Processing temperature record ${index + 1}:`, item.timestamp)
           return {
-            time: formatToDDMMMHH(item.timestamp),
+            time: formatToDisplayTime(item.timestamp),
             temperature: Number.parseFloat(item.temperature),
-            fullTime: formatReadableTime(item.timestamp),
-            originalTimestamp: item.timestamp, // Store original timestamp
+            fullTime: formatDetailedTime(item.timestamp),
+            originalTimestamp: item.timestamp,
           }
         })
+
+        console.log("Formatted temperature data:", formattedData)
 
         // Calculate average temperature
         const sum = data.reduce((acc, item) => acc + Number(item.temperature), 0)
@@ -99,8 +133,10 @@ export function Temperaturegraph() {
         setAverage(avg)
 
         setChartData(formattedData)
+        setError(null)
       } catch (error) {
         console.error("Error:", error)
+        setError("Unexpected error: " + (error as Error).message)
       } finally {
         setLoading(false)
       }
@@ -127,15 +163,24 @@ export function Temperaturegraph() {
           <CardTitle className="text-base font-medium">Body Temperature</CardTitle>
           <Thermometer className="h-4 w-4 text-orange-500" />
         </div>
-        <CardDescription className="text-xs">Last 7 records • Format: DDMMMHH</CardDescription>
+        <CardDescription className="text-xs">Last 7 records • Format: DD MMM HHPM</CardDescription>
       </CardHeader>
       <CardContent className="pb-2">
-        {chartData.length > 0 ? (
+        {error ? (
+          <div className="flex h-[180px] items-center justify-center text-sm text-red-500">{error}</div>
+        ) : chartData.length > 0 ? (
           <ChartContainer config={chartConfig}>
             <ResponsiveContainer width="100%" height={180}>
               <AreaChart data={chartData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
-                <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} tick={{ fontSize: 10 }} />
+                <XAxis 
+                  dataKey="time" 
+                  tickLine={false} 
+                  axisLine={false} 
+                  tickMargin={8} 
+                  tick={{ fontSize: 9 }}
+                  interval={Math.floor(chartData.length / 3)} // Show ~3 labels
+                />
                 <YAxis tickLine={false} axisLine={false} tickMargin={8} tick={{ fontSize: 10 }} domain={[35, 38]} />
                 <ChartTooltip
                   cursor={false}
@@ -149,8 +194,7 @@ export function Temperaturegraph() {
                             <span className="font-bold">{data.fullTime}</span>
                             <span className="text-[0.70rem] uppercase text-muted-foreground">Temperature</span>
                             <span className="font-bold text-orange-600">{data.temperature}°C</span>
-                            <span className="text-[0.70rem] uppercase text-muted-foreground">Original Time</span>
-                            <span className="font-bold">{data.originalTimestamp}</span>
+                            <span className="text-[0.60rem] text-muted-foreground">Original: {data.originalTimestamp}</span>
                           </div>
                         </div>
                       )

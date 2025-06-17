@@ -22,19 +22,47 @@ const chartConfig = {
   },
 } satisfies ChartConfig
 
+// Helper function to format timestamp to DD MMM HH format
+const formatToDisplayTime = (timestamp: string) => {
+  try {
+    const date = new Date(timestamp)
+    if (isNaN(date.getTime())) return 'Invalid Date'
+    
+    const day = date.getUTCDate().toString().padStart(2, "0")
+    const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
+    const month = months[date.getUTCMonth()]
+    const hour = date.getUTCHours()
+    
+    // Convert 24hr to 12hr format
+    const hour12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour
+    const ampm = hour >= 12 ? 'PM' : 'AM'
+    
+    return `${day} ${month} ${hour12.toString().padStart(2, "0")}${ampm}`
+  } catch (error) {
+    console.error('Error formatting timestamp:', timestamp, error)
+    return 'Invalid Date'
+  }
+}
+
 export function Ecggraph() {
   const [chartData, setChartData] = React.useState<any[]>([])
   const [loading, setLoading] = React.useState(true)
   const [activeChart, setActiveChart] = React.useState<"ecg" | "filtered">("ecg")
-  const [timeRanges, setTimeRanges] = React.useState<{ start: string; end: string }[]>([])
+  const [timeRanges, setTimeRanges] = React.useState<{ start: string; end: string; label: string }[]>([])
   const [selectedRange, setSelectedRange] = React.useState<number>(0)
+  const [error, setError] = React.useState<string | null>(null)
 
   React.useEffect(() => {
     const fetchEcgData = async () => {
       try {
-        const userData = LocalStorageService.getUserData()
-        if (!userData.walletAddress) {
-          console.error("No user ID found in localStorage")
+        setError(null)
+        const userId = LocalStorageService.getUserId()
+        const deviceId = LocalStorageService.getDeviceId()
+
+        console.log("Fetching ECG data for user:", userId, "device:", deviceId)
+
+        if (!userId) {
+          setError("No user ID found in localStorage")
           setLoading(false)
           return
         }
@@ -43,26 +71,36 @@ export function Ecggraph() {
         twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24)
 
         // First, get the available ECG recording time ranges
-        const { data: timeData, error: timeError } = await supabase
+        let query = supabase
           .from("vitals_data")
           .select("timestamp")
-          .eq("user_id", userData.walletAddress)
+          .eq("user_id", userId)
           .gte("timestamp", twentyFourHoursAgo.toISOString())
           .not("ecg_data", "is", null)
           .order("timestamp", { ascending: true })
 
+        if (deviceId) {
+          query = query.eq("device_id", deviceId)
+        }
+
+        const { data: timeData, error: timeError } = await query
+
         if (timeError) {
           console.error("Error fetching ECG time ranges:", timeError)
+          setError("Error fetching ECG time ranges: " + timeError.message)
           return
         }
 
+        console.log("ECG time data found:", timeData?.length || 0, "records")
+
         if (!timeData || timeData.length === 0) {
+          setError("No ECG data found in last 24 hours")
           setLoading(false)
           return
         }
 
         // Group recordings into 10-minute segments
-        const segments: { start: string; end: string }[] = []
+        const segments: { start: string; end: string; label: string }[] = []
         let currentSegmentStart = new Date(timeData[0].timestamp)
         let currentSegmentEnd = new Date(currentSegmentStart)
         currentSegmentEnd.setMinutes(currentSegmentEnd.getMinutes() + 10)
@@ -73,6 +111,7 @@ export function Ecggraph() {
             segments.push({
               start: currentSegmentStart.toISOString(),
               end: currentSegmentEnd.toISOString(),
+              label: formatToDisplayTime(currentSegmentStart.toISOString()),
             })
             currentSegmentStart = timestamp
             currentSegmentEnd = new Date(currentSegmentStart)
@@ -84,8 +123,10 @@ export function Ecggraph() {
         segments.push({
           start: currentSegmentStart.toISOString(),
           end: currentSegmentEnd.toISOString(),
+          label: formatToDisplayTime(currentSegmentStart.toISOString()),
         })
 
+        console.log("ECG segments created:", segments.length)
         setTimeRanges(segments)
 
         // If we have segments, fetch the first one
@@ -94,6 +135,7 @@ export function Ecggraph() {
         }
       } catch (error) {
         console.error("Error:", error)
+        setError("Unexpected error: " + (error as Error).message)
         setLoading(false)
       }
     }
@@ -104,23 +146,37 @@ export function Ecggraph() {
   const fetchEcgSegment = async (startTime: string, endTime: string) => {
     try {
       setLoading(true)
-      const userData = LocalStorageService.getUserData()
+      setError(null)
+      const userId = LocalStorageService.getUserId()
+      const deviceId = LocalStorageService.getDeviceId()
 
-      const { data, error } = await supabase
+      console.log("Fetching ECG segment from", startTime, "to", endTime)
+
+      let query = supabase
         .from("vitals_data")
         .select("ecg_data, timestamp")
-        .eq("user_id", userData.walletAddress)
+        .eq("user_id", userId)
         .gte("timestamp", startTime)
         .lte("timestamp", endTime)
         .not("ecg_data", "is", null)
         .order("timestamp", { ascending: true })
 
+      if (deviceId) {
+        query = query.eq("device_id", deviceId)
+      }
+
+      const { data, error } = await query
+
       if (error) {
         console.error("Error fetching ECG data:", error)
+        setError("Error fetching ECG data: " + error.message)
         return
       }
 
+      console.log("ECG segment data found:", data?.length || 0, "records")
+
       if (!data || data.length === 0) {
+        setError("No ECG data available for this time period")
         setLoading(false)
         return
       }
@@ -128,39 +184,56 @@ export function Ecggraph() {
       // Parse ECG data - assuming it's stored as a JSON string with points
       const formattedData = []
 
-      for (const record of data) {
+      for (const [recordIndex, record] of data.entries()) {
         try {
-          const ecgPoints = JSON.parse(record.ecg_data)
+          let ecgPoints
+          
+          // Handle both string and object formats
+          if (typeof record.ecg_data === 'string') {
+            ecgPoints = JSON.parse(record.ecg_data)
+          } else {
+            ecgPoints = record.ecg_data
+          }
 
-          // If it's an array of points
-          if (Array.isArray(ecgPoints)) {
-            for (let i = 0; i < ecgPoints.length; i++) {
+          console.log(`Processing ECG record ${recordIndex + 1}:`, typeof ecgPoints, ecgPoints)
+
+          // Extract values array from the ECG data structure
+          let values = []
+          if (ecgPoints && ecgPoints.values && Array.isArray(ecgPoints.values)) {
+            values = ecgPoints.values
+          } else if (Array.isArray(ecgPoints)) {
+            values = ecgPoints
+          } else if (typeof ecgPoints === 'number') {
+            values = [ecgPoints]
+          } else {
+            console.warn(`Unexpected ECG data format in record ${recordIndex + 1}:`, ecgPoints)
+            continue
+          }
+
+          // Add each ECG point as a data point
+          for (const [pointIndex, point] of values.entries()) {
+            if (typeof point === 'number' && !isNaN(point)) {
               formattedData.push({
                 index: formattedData.length,
-                time: new Date(record.timestamp).toLocaleTimeString(),
-                ecg: ecgPoints[i],
+                time: formatToDisplayTime(record.timestamp),
+                ecg: Number(point.toFixed(3)),
                 // Generate a filtered version that's smoother (simulated)
-                filtered: ecgPoints[i] + (Math.random() * 0.1 - 0.05),
+                filtered: Number((point + (Math.random() * 0.1 - 0.05)).toFixed(3)),
+                originalTimestamp: record.timestamp,
               })
             }
           }
-          // If it's a single value
-          else if (typeof ecgPoints === "number") {
-            formattedData.push({
-              index: formattedData.length,
-              time: new Date(record.timestamp).toLocaleTimeString(),
-              ecg: ecgPoints,
-              filtered: ecgPoints + (Math.random() * 0.1 - 0.05),
-            })
-          }
         } catch (e) {
-          console.error("Error parsing ECG data:", e)
+          console.error(`Error parsing ECG data for record ${recordIndex + 1}:`, e, record.ecg_data)
         }
       }
 
+      console.log("Formatted ECG data points:", formattedData.length)
       setChartData(formattedData)
+      setError(null)
     } catch (error) {
       console.error("Error:", error)
+      setError("Unexpected error: " + (error as Error).message)
     } finally {
       setLoading(false)
     }
@@ -185,7 +258,7 @@ export function Ecggraph() {
   }
 
   return (
-    <Card className="py-4 sm:py-0">
+    <Card className="py-4 sm:py-0 w-full">
       <CardHeader className="flex flex-col items-stretch border-b !p-0 sm:flex-row">
         <div className="flex flex-1 flex-col justify-center gap-1 px-6 pb-3 sm:pb-0">
           <div className="flex items-center gap-2">
@@ -222,14 +295,16 @@ export function Ecggraph() {
                 selectedRange === index ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/80"
               }`}
             >
-              {new Date(range.start).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+              {range.label}
             </button>
           ))}
         </div>
       )}
 
       <CardContent className="px-2 sm:p-6">
-        {chartData.length > 0 ? (
+        {error ? (
+          <div className="flex h-[250px] items-center justify-center text-sm text-red-500">{error}</div>
+        ) : chartData.length > 0 ? (
           <ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full">
             <ResponsiveContainer width="100%" height={250}>
               <LineChart
