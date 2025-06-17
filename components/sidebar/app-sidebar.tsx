@@ -2,16 +2,24 @@
 
 import * as React from "react"
 import {
-  AudioWaveform,
-  BookOpen,
+  Activity,
   Bot,
-  Command,
-  Frame,
-  GalleryVerticalEnd,
-  Map,
-  PieChart,
+  Brain,
+  CreditCard,
+  Heart,
+  HeartHandshake,
+  Package,
   Settings2,
-  SquareTerminal,
+  Shield,
+  Stethoscope,
+  Users,
+  Wallet,
+  Bell,
+  BarChart3,
+  MessageSquare,
+  Calendar,
+  FileText,
+  User,
 } from "lucide-react"
 
 import { NavMain } from "@/components/sidebar/nav-main"
@@ -25,123 +33,349 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar"
+import { useAuth } from "@/lib/auth-context"
 
-const data = {
-  navMain: [
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { user } = useAuth()
+
+  // User navigation items
+  const userNavItems = [
     {
-      title: "Playground",
-      url: "#",
-      icon: SquareTerminal,
+      title: "Dashboard",
+      url: "/user/dashboard",
+      icon: Activity,
       isActive: true,
       items: [
         {
-          title: "History",
-          url: "#",
+          title: "Health Vitals",
+          url: "/user/dashboard",
         },
         {
-          title: "Starred",
-          url: "#",
-        },
-        {
-          title: "Settings",
-          url: "#",
+          title: "Recent Activity",
+          url: "/user/dashboard/activity",
         },
       ],
     },
     {
-      title: "Models",
-      url: "#",
+      title: "Wellness Insights",
+      url: "/user/wellness",
+      icon: BarChart3,
+      items: [
+        {
+          title: "Health Trends",
+          url: "/user/wellness/trends",
+        },
+        {
+          title: "Reports",
+          url: "/user/wellness/reports",
+        },
+        {
+          title: "Analytics",
+          url: "/user/wellness/analytics",
+        },
+      ],
+    },
+    {
+      title: "Doctor Connect",
+      url: "/user/doctors",
+      icon: Stethoscope,
+      items: [
+        {
+          title: "Find Doctors",
+          url: "/user/doctors/find",
+        },
+        {
+          title: "My Doctors",
+          url: "/user/doctors/my-doctors",
+        },
+        {
+          title: "Appointments",
+          url: "/user/doctors/appointments",
+        },
+        {
+          title: "Consultations",
+          url: "/user/doctors/consultations",
+        },
+      ],
+    },
+    {
+      title: "Core Care Plan",
+      url: "/user/care-plan",
+      icon: HeartHandshake,
+      items: [
+        {
+          title: "My Plan",
+          url: "/user/care-plan/my-plan",
+        },
+        {
+          title: "Goals",
+          url: "/user/care-plan/goals",
+        },
+        {
+          title: "Medications",
+          url: "/user/care-plan/medications",
+        },
+        {
+          title: "Progress",
+          url: "/user/care-plan/progress",
+        },
+      ],
+    },
+    {
+      title: "MediBot",
+      url: "/user/medibot",
       icon: Bot,
       items: [
         {
-          title: "Genesis",
-          url: "#",
+          title: "Chat",
+          url: "/user/medibot/chat",
         },
         {
-          title: "Explorer",
-          url: "#",
+          title: "Health Assistant",
+          url: "/user/medibot/assistant",
         },
         {
-          title: "Quantum",
-          url: "#",
+          title: "Symptom Checker",
+          url: "/user/medibot/symptoms",
         },
       ],
     },
     {
-      title: "Documentation",
-      url: "#",
-      icon: BookOpen,
+      title: "Products",
+      url: "/user/products",
+      icon: Package,
       items: [
         {
-          title: "Introduction",
-          url: "#",
+          title: "Health Devices",
+          url: "/user/products/devices",
         },
         {
-          title: "Get Started",
-          url: "#",
+          title: "Supplements",
+          url: "/user/products/supplements",
         },
         {
-          title: "Tutorials",
-          url: "#",
+          title: "My Orders",
+          url: "/user/products/orders",
         },
         {
-          title: "Changelog",
-          url: "#",
+          title: "Recommendations",
+          url: "/user/products/recommendations",
+        },
+      ],
+    },
+    {
+      title: "Wallet",
+      url: "/user/wallet",
+      icon: Wallet,
+      items: [
+        {
+          title: "Balance",
+          url: "/user/wallet/balance",
+        },
+        {
+          title: "Transactions",
+          url: "/user/wallet/transactions",
+        },
+        {
+          title: "Payment Methods",
+          url: "/user/wallet/payment-methods",
+        },
+        {
+          title: "Rewards",
+          url: "/user/wallet/rewards",
+        },
+      ],
+    },
+    {
+      title: "Alerts",
+      url: "/user/alerts",
+      icon: Bell,
+      items: [
+        {
+          title: "Health Alerts",
+          url: "/user/alerts/health",
+        },
+        {
+          title: "Medication Reminders",
+          url: "/user/alerts/medications",
+        },
+        {
+          title: "Appointment Reminders",
+          url: "/user/alerts/appointments",
+        },
+        {
+          title: "Settings",
+          url: "/user/alerts/settings",
+        },
+      ],
+    },
+  ]
+
+  // Doctor navigation items
+  const doctorNavItems = [
+    {
+      title: "Dashboard",
+      url: "/doctor/dashboard",
+      icon: Activity,
+      isActive: true,
+      items: [
+        {
+          title: "Overview",
+          url: "/doctor/dashboard",
+        },
+        {
+          title: "Today's Schedule",
+          url: "/doctor/dashboard/schedule",
+        },
+      ],
+    },
+    {
+      title: "Patients",
+      url: "/doctor/patients",
+      icon: Users,
+      items: [
+        {
+          title: "All Patients",
+          url: "/doctor/patients",
+        },
+        {
+          title: "Active Cases",
+          url: "/doctor/patients/active",
+        },
+        {
+          title: "Patient Records",
+          url: "/doctor/patients/records",
+        },
+      ],
+    },
+    {
+      title: "Appointments",
+      url: "/doctor/appointments",
+      icon: Calendar,
+      items: [
+        {
+          title: "Schedule",
+          url: "/doctor/appointments/schedule",
+        },
+        {
+          title: "Pending Requests",
+          url: "/doctor/appointments/requests",
+        },
+        {
+          title: "History",
+          url: "/doctor/appointments/history",
+        },
+      ],
+    },
+    {
+      title: "Consultations",
+      url: "/doctor/consultations",
+      icon: MessageSquare,
+      items: [
+        {
+          title: "Video Calls",
+          url: "/doctor/consultations/video",
+        },
+        {
+          title: "Chat",
+          url: "/doctor/consultations/chat",
+        },
+        {
+          title: "Follow-ups",
+          url: "/doctor/consultations/followups",
+        },
+      ],
+    },
+    {
+      title: "Medical Records",
+      url: "/doctor/records",
+      icon: FileText,
+      items: [
+        {
+          title: "Patient Files",
+          url: "/doctor/records/files",
+        },
+        {
+          title: "Prescriptions",
+          url: "/doctor/records/prescriptions",
+        },
+        {
+          title: "Lab Results",
+          url: "/doctor/records/lab-results",
         },
       ],
     },
     {
       title: "Settings",
-      url: "#",
+      url: "/doctor/settings",
       icon: Settings2,
       items: [
         {
-          title: "General",
-          url: "#",
+          title: "Profile",
+          url: "/doctor/settings/profile",
         },
         {
-          title: "Team",
-          url: "#",
+          title: "Availability",
+          url: "/doctor/settings/availability",
         },
         {
-          title: "Billing",
-          url: "#",
-        },
-        {
-          title: "Limits",
-          url: "#",
+          title: "Preferences",
+          url: "/doctor/settings/preferences",
         },
       ],
     },
-  ],
-  projects: [
-    {
-      name: "Design Engineering",
-      url: "#",
-      icon: Frame,
-    },
-    {
-      name: "Sales & Marketing",
-      url: "#",
-      icon: PieChart,
-    },
-    {
-      name: "Travel",
-      url: "#",
-      icon: Map,
-    },
-  ],
-}
+  ]
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  // User projects/quick access
+  const userProjects = [
+    {
+      name: "Emergency Contacts",
+      url: "/user/emergency",
+      icon: Shield,
+    },
+    {
+      name: "Health Records",
+      url: "/user/records",
+      icon: FileText,
+    },
+    {
+      name: "Insurance",
+      url: "/user/insurance",
+      icon: CreditCard,
+    },
+  ]
+
+  // Doctor projects/quick access
+  const doctorProjects = [
+    {
+      name: "Medical Guidelines",
+      url: "/doctor/guidelines",
+      icon: Brain,
+    },
+    {
+      name: "Research Papers",
+      url: "/doctor/research",
+      icon: FileText,
+    },
+    {
+      name: "Continuing Education",
+      url: "/doctor/education",
+      icon: Settings2,
+    },
+  ]
+
+  // Determine which navigation to show based on user type
+  const navItems = user?.user_type === 'doctor' ? doctorNavItems : userNavItems
+  const projects = user?.user_type === 'doctor' ? doctorProjects : userProjects
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <TeamSwitcher />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        <NavMain items={navItems} />
+        <NavProjects projects={projects} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser />
