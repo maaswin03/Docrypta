@@ -4,8 +4,11 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { AlertTriangle } from 'lucide-react'
+import { useAuth } from '@/lib/auth-context'
 
 export default function NotFound() {
+  const { user } = useAuth()
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md text-center">
@@ -28,9 +31,17 @@ export default function NotFound() {
             <li>• You don't have permission to access this resource</li>
           </ul>
           <div className="flex flex-col gap-2 pt-4">
-            <Button asChild>
-              <Link href="/signin">Go to Sign In</Link>
-            </Button>
+            {user ? (
+              <Button asChild>
+                <Link href={user.user_type === 'doctor' ? '/doctor/dashboard' : '/user/dashboard'}>
+                  Go to Dashboard
+                </Link>
+              </Button>
+            ) : (
+              <Button asChild>
+                <Link href="/signin">Go to Sign In</Link>
+              </Button>
+            )}
             <Button variant="outline" asChild>
               <Link href="/">Go Home</Link>
             </Button>

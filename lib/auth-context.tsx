@@ -78,9 +78,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     checkSession()
   }, [])
 
-  // Simplified route protection - only handle basic redirects
+  // Handle routing after auth is initialized
   useEffect(() => {
-    if (!isInitialized) return
+    if (!isInitialized || isLoading) return
 
     console.log('🛡️ Route protection check:', { 
       pathname, 
@@ -94,10 +94,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (user) {
         const dashboardRoute = user.user_type === 'doctor' ? '/doctor/dashboard' : '/user/dashboard'
         console.log('🏠 Redirecting authenticated user from root to:', dashboardRoute)
-        router.replace(dashboardRoute)
+        router.push(dashboardRoute)
       } else {
         console.log('🏠 Redirecting unauthenticated user from root to signin')
-        router.replace('/signin')
+        router.push('/signin')
       }
       return
     }
@@ -106,10 +106,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (user && (pathname === '/signin' || pathname.startsWith('/signup'))) {
       const dashboardRoute = user.user_type === 'doctor' ? '/doctor/dashboard' : '/user/dashboard'
       console.log('🔄 Authenticated user on auth page, redirecting to:', dashboardRoute)
-      router.replace(dashboardRoute)
+      router.push(dashboardRoute)
       return
     }
-  }, [user, isInitialized, pathname, router])
+
+    // Handle 404 page for authenticated users
+    if (user && pathname === '/404') {
+      const dashboardRoute = user.user_type === 'doctor' ? '/doctor/dashboard' : '/user/dashboard'
+      console.log('🔄 Authenticated user on 404 page, redirecting to:', dashboardRoute)
+      router.push(dashboardRoute)
+      return
+    }
+  }, [user, isInitialized, isLoading, pathname, router])
 
   const login = (userData: User) => {
     console.log('🔐 Logging in user:', userData.full_name, 'Type:', userData.user_type)
@@ -125,7 +133,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Immediate redirect after login
     const dashboardRoute = userData.user_type === 'doctor' ? '/doctor/dashboard' : '/user/dashboard'
     console.log('🚀 Redirecting after login to:', dashboardRoute)
-    router.replace(dashboardRoute)
+    router.push(dashboardRoute)
   }
 
   const logout = () => {
@@ -133,7 +141,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUser(null)
     localStorage.removeItem('user')
     localStorage.removeItem('sessionExpiry')
-    router.replace('/signin')
+    router.push('/signin')
   }
 
   const value: AuthContextType = {
