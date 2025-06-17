@@ -13,7 +13,7 @@ export interface UserData {
   phone_number?: string
   reg_id?: string | null
   specialization?: string | null
-  user_type?: "patient" | "doctor"
+  user_type?: "user" | "doctor"
   wallet_address?: string
 }
 
