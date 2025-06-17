@@ -83,6 +83,7 @@ export function Signin({ className, ...props }: React.ComponentPropsWithoutRef<"
     })
 
     if (result.success && result.user) {
+      console.log('Email signin successful:', result.user)
       setSuccessUser(result.user)
       setShowSuccessDialog(true)
     } else {
@@ -106,6 +107,7 @@ export function Signin({ className, ...props }: React.ComponentPropsWithoutRef<"
     })
 
     if (result.success && result.user) {
+      console.log('Wallet signin successful:', result.user)
       setSuccessUser(result.user)
       setShowSuccessDialog(true)
     } else {
@@ -118,12 +120,12 @@ export function Signin({ className, ...props }: React.ComponentPropsWithoutRef<"
   const handleSuccessDialogClose = () => {
     setShowSuccessDialog(false)
     if (successUser) {
+      console.log('Processing successful login for:', successUser.full_name)
       // Use the auth context login method
       login(successUser)
       
-      // Navigate to appropriate dashboard
-      const dashboardRoute = successUser.user_type === "doctor" ? "/doctor/dashboard" : "/user/dashboard"
-      router.push(dashboardRoute)
+      // The AuthProvider will handle the redirect automatically
+      // No manual navigation needed here
     }
   }
 
