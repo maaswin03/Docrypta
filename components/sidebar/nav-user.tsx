@@ -7,6 +7,7 @@ import {
   CreditCard,
   LogOut,
   Sparkles,
+  User,
 } from "lucide-react"
 
 import {
@@ -30,10 +31,12 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { useAuth } from "@/lib/auth-context"
+import { useRouter } from "next/navigation"
 
 export function NavUser() {
   const { isMobile } = useSidebar()
   const { user, logout } = useAuth()
+  const router = useRouter()
 
   if (!user) return null
 
@@ -42,6 +45,11 @@ export function NavUser() {
     .map(name => name[0])
     .join('')
     .toUpperCase()
+
+  const handleAccountClick = () => {
+    const accountRoute = user.user_type === 'doctor' ? '/doctor/account' : '/user/account'
+    router.push(accountRoute)
+  }
 
   return (
     <SidebarMenu>
@@ -83,16 +91,13 @@ export function NavUser() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <Sparkles />
-                Upgrade to Pro
+              <DropdownMenuItem onClick={handleAccountClick}>
+                <User />
+                Account
               </DropdownMenuItem>
-            </DropdownMenuGroup>
-            <DropdownMenuSeparator />
-            <DropdownMenuGroup>
               <DropdownMenuItem>
                 <BadgeCheck />
-                Account
+                Profile
               </DropdownMenuItem>
               <DropdownMenuItem>
                 <CreditCard />
