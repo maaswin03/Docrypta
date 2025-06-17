@@ -44,6 +44,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: "Dashboard",
       url: "/user/dashboard",
       icon: Activity,
+            items: [
+        {
+          title: "Overview",
+          url: "/doctor/dashboard",
+        },
+        {
+          title: "Today's Schedule",
+          url: "/doctor/dashboard/schedule",
+        },
+      ],
     },
     {
       title: "Wellness Insights",
