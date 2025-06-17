@@ -200,8 +200,7 @@ export function Respiratoryrategraph() {
                             <span className="text-[0.70rem] uppercase text-muted-foreground">Time</span>
                             <span className="font-bold">{data.fullTime}</span>
                             <span className="text-[0.70rem] uppercase text-muted-foreground">Respiratory Rate</span>
-                            <span className="font-bold text-purple-600">{data.respiratory_rate} breaths/min</span>
-                            <span className="text-[0.60rem] text-muted-foreground">Original: {data.originalTimestamp}</span>
+                            <span className="font-bold">{data.respiratory_rate} breaths/min</span>
                           </div>
                         </div>
                       )
