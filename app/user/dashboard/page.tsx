@@ -57,7 +57,7 @@ export default function Page() {
               </div>
 
               {/* ECG Graph - Increased height container */}
-              <div className="w-full h-[380px]">
+              <div className="w-full h-[480px]">
                 <Ecggraph />
               </div>
 
