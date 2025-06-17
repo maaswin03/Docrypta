@@ -63,22 +63,22 @@ export default function Page() {
 
               {/* Main vitals - Increased height containers in responsive grid */}
               <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-2 2xl:grid-cols-3">
-                <div className="h-[320px] w-full">
+                <div className="h-[420px] w-full">
                   <Heartgraph />
                 </div>
-                <div className="h-[320px] w-full">
+                <div className="h-[420px] w-full">
                   <Spo2graph />
                 </div>
-                <div className="h-[320px] w-full">
+                <div className="h-[420px] w-full">
                   <Temperaturegraph />
                 </div>
-                <div className="h-[320px] w-full">
+                <div className="h-[420px] w-full">
                   <Respiratoryrategraph />
                 </div>
-                <div className="h-[320px] w-full">
+                <div className="h-[420px] w-full">
                   <Glucosegraph />
                 </div>
-                <div className="h-[320px] w-full">
+                <div className="h-[420px] w-full">
                   <Activitylevelgraph />
                 </div>
               </div>
