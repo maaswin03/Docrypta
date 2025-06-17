@@ -64,20 +64,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: "MediBot",
       url: "/user/medibot",
       icon: Bot,
-      items: [
-        {
-          title: "Chat",
-          url: "/user/medibot/chat",
-        },
-        {
-          title: "Health Assistant",
-          url: "/user/medibot/assistant",
-        },
-        {
-          title: "Symptom Checker",
-          url: "/user/medibot/symptoms",
-        },
-      ],
     },
     {
       title: "Products",
