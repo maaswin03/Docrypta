@@ -20,6 +20,10 @@ import {
   Calendar,
   FileText,
   User,
+  Baby,
+  HelpCircle,
+  Smartphone,
+  ShoppingCart,
 } from "lucide-react"
 
 import { NavMain } from "@/components/sidebar/nav-main"
@@ -71,34 +75,62 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       ],
     },
     {
-      title: "Wellness Insights",
+      title: "Health Services",
       url: "/user/wellness",
       icon: BarChart3,
-    },
-    {
-      title: "Doctor Connect",
-      url: "/user/doctors",
-      icon: Stethoscope,
-    },
-    {
-      title: "Core Care Plan",
-      url: "/user/care-plan",
-      icon: HeartHandshake,
+      items: [
+        {
+          title: "Wellness Insights",
+          url: "/user/wellnessinsights",
+        },
+        {
+          title: "Doctor Connect",
+          url: "/user/doctorconnect",
+        },
+        {
+          title: "Core Care Plan",
+          url: "/user/corecareplan",
+        },
+        {
+          title: "Mother Care 360",
+          url: "/user/mothercare360",
+        },
+      ],
     },
     {
       title: "Products",
       url: "/user/products",
       icon: Package,
-    },
-    {
-      title: "Wallet",
-      url: "/user/wallet",
-      icon: Wallet,
+      items: [
+        {
+          title: "BioWear",
+          url: "/user/biowear",
+        },
+        {
+          title: "SyncApp",
+          url: "/user/syncapp",
+        },
+      ],
     },
     {
       title: "Alerts",
       url: "/user/alerts",
       icon: Bell,
+    },
+    {
+      title: "Resources",
+      url: "/user/resources",
+      icon: HelpCircle,
+      items: [
+        {
+          title: "FAQs",
+          url: "/user/faqs",
+        },
+        {
+          title: "Home",
+          url: "/user/home",
+        },
+      ],
     },
   ]
 
