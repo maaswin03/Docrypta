@@ -197,7 +197,6 @@ export function LatestVitalsSummary() {
         {latestVitals.timestamp && (
           <span className="text-sm text-muted-foreground">
             Last updated: {formatToDisplayTime(latestVitals.timestamp)}
-            <span className="ml-2 text-xs">({latestVitals.timestamp})</span>
           </span>
         )}
       </div>
