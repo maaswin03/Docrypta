@@ -212,7 +212,7 @@ export function Activitylevelgraph() {
 
   if (loading) {
     return (
-      <Card className="h-full">
+      <Card className="h-full w-full">
         <CardHeader>
           <CardTitle>Activity Level</CardTitle>
           <CardDescription>Loading...</CardDescription>
@@ -222,27 +222,27 @@ export function Activitylevelgraph() {
   }
 
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-2">
+    <Card className="h-full w-full flex flex-col overflow-hidden">
+      <CardHeader className="pb-3 flex-shrink-0">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-medium">Activity Level</CardTitle>
           <Footprints className="h-4 w-4 text-yellow-500" />
         </div>
         <CardDescription className="text-xs">Last 7 records • {summary?.timeRange || "No data"}</CardDescription>
       </CardHeader>
-      <CardContent className="pb-2">
+      <CardContent className="pb-3 flex-1 min-h-0 overflow-hidden">
         {error ? (
-          <div className="flex h-[180px] items-center justify-center text-sm text-red-500">{error}</div>
+          <div className="flex h-full items-center justify-center text-sm text-red-500">{error}</div>
         ) : chartData.length > 0 ? (
-          <ChartContainer config={chartConfig}>
-            <ResponsiveContainer width="100%" height={180}>
+          <ChartContainer config={chartConfig} className="h-full w-full">
+            <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={chartData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={40}
-                  outerRadius={70}
+                  innerRadius={30}
+                  outerRadius={60}
                   paddingAngle={2}
                   dataKey="value"
                 >
@@ -276,12 +276,12 @@ export function Activitylevelgraph() {
             </ResponsiveContainer>
           </ChartContainer>
         ) : (
-          <div className="flex h-[180px] items-center justify-center text-sm text-muted-foreground">
+          <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
             No data available
           </div>
         )}
       </CardContent>
-      <CardFooter className="pt-0">
+      <CardFooter className="pt-0 flex-shrink-0">
         {summary && (
           <div className="grid grid-cols-2 gap-2 w-full text-xs">
             <div className="flex items-center gap-1">

@@ -147,7 +147,7 @@ export function Glucosegraph() {
 
   if (loading) {
     return (
-      <Card className="h-full">
+      <Card className="h-full w-full">
         <CardHeader>
           <CardTitle>Glucose Level</CardTitle>
           <CardDescription>Loading...</CardDescription>
@@ -157,31 +157,38 @@ export function Glucosegraph() {
   }
 
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-2">
+    <Card className="h-full w-full flex flex-col overflow-hidden">
+      <CardHeader className="pb-3 flex-shrink-0">
         <div className="flex items-center justify-between">
           <CardTitle className="text-base font-medium">Glucose Level</CardTitle>
           <Droplet className="h-4 w-4 text-green-600" />
         </div>
         <CardDescription className="text-xs">Last 7 records • Format: DD MMM HHPM</CardDescription>
       </CardHeader>
-      <CardContent className="pb-2">
+      <CardContent className="pb-3 flex-1 min-h-0 overflow-hidden">
         {error ? (
-          <div className="flex h-[180px] items-center justify-center text-sm text-red-500">{error}</div>
+          <div className="flex h-full items-center justify-center text-sm text-red-500">{error}</div>
         ) : chartData.length > 0 ? (
-          <ChartContainer config={chartConfig}>
-            <ResponsiveContainer width="100%" height={180}>
-              <BarChart data={chartData} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
+          <ChartContainer config={chartConfig} className="h-full w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 10 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
                 <XAxis 
                   dataKey="time" 
                   tickLine={false} 
                   axisLine={false} 
-                  tickMargin={8} 
-                  tick={{ fontSize: 9 }}
+                  tickMargin={6} 
+                  tick={{ fontSize: 10 }}
                   interval={Math.floor(chartData.length / 3)} // Show ~3 labels
                 />
-                <YAxis tickLine={false} axisLine={false} tickMargin={8} tick={{ fontSize: 10 }} domain={[70, 180]} />
+                <YAxis 
+                  tickLine={false} 
+                  axisLine={false} 
+                  tickMargin={6} 
+                  tick={{ fontSize: 10 }} 
+                  domain={[70, 180]}
+                  width={35}
+                />
                 <ChartTooltip
                   cursor={false}
                   content={({ active, payload, label }) => {
@@ -202,17 +209,17 @@ export function Glucosegraph() {
                     return null
                   }}
                 />
-                <Bar dataKey="glucose_level" fill="hsl(150, 100%, 40%)" radius={4} maxBarSize={20} />
+                <Bar dataKey="glucose_level" fill="hsl(150, 100%, 40%)" radius={[2, 2, 0, 0]} maxBarSize={20} />
               </BarChart>
             </ResponsiveContainer>
           </ChartContainer>
         ) : (
-          <div className="flex h-[180px] items-center justify-center text-sm text-muted-foreground">
+          <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
             No data available
           </div>
         )}
       </CardContent>
-      <CardFooter className="pt-0">
+      <CardFooter className="pt-0 flex-shrink-0">
         {average !== null && (
           <div className="flex w-full items-center justify-between text-sm">
             <span className="text-muted-foreground">Average</span>
