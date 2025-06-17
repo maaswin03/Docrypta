@@ -49,20 +49,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: "Wellness Insights",
       url: "/user/wellness",
       icon: BarChart3,
-      items: [
-        {
-          title: "Health Trends",
-          url: "/user/wellness/trends",
-        },
-        {
-          title: "Reports",
-          url: "/user/wellness/reports",
-        },
-        {
-          title: "Analytics",
-          url: "/user/wellness/analytics",
-        },
-      ],
     },
     {
       title: "Doctor Connect",
