@@ -29,7 +29,7 @@ export default function Page() {
     <ProtectedRoute allowedRoles={['user']}>
       <SidebarProvider>
         <AppSidebar />
-        <SidebarInset className="flex flex-col min-h-screen overflow-hidden">
+        <SidebarInset className="flex flex-col h-screen overflow-hidden">
           <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 border-b">
             <div className="flex items-center gap-2 px-4">
               <SidebarTrigger className="-ml-1" />
@@ -48,48 +48,44 @@ export default function Page() {
             </div>
           </header>
           
-          {/* Main content area with proper scrolling */}
-          <div className="flex-1 overflow-y-auto">
-            <div className="p-4 space-y-6 max-w-full">
-              {/* Latest Vitals Summary */}
+          {/* Main content area with proper scrolling and height constraints */}
+          <div className="flex-1 overflow-y-auto min-h-0">
+            <div className="p-4 space-y-4 max-w-full">
+              {/* Latest Vitals Summary - Fixed height */}
               <div className="w-full">
                 <LatestVitalsSummary />
               </div>
 
-              {/* ECG Graph - Full width with constrained height */}
-              <div className="w-full">
-                <div className="h-[350px] w-full">
-                  <Ecggraph />
-                </div>
+              {/* ECG Graph - Fixed height container */}
+              <div className="w-full h-[320px]">
+                <Ecggraph />
               </div>
 
-              {/* Main vitals - Responsive grid with fixed heights */}
+              {/* Main vitals - Fixed height containers in responsive grid */}
               <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-2 2xl:grid-cols-3">
-                <div className="h-[300px] w-full">
+                <div className="h-[280px] w-full">
                   <Heartgraph />
                 </div>
-                <div className="h-[300px] w-full">
+                <div className="h-[280px] w-full">
                   <Spo2graph />
                 </div>
-                <div className="h-[300px] w-full">
+                <div className="h-[280px] w-full">
                   <Temperaturegraph />
                 </div>
-                <div className="h-[300px] w-full">
+                <div className="h-[280px] w-full">
                   <Respiratoryrategraph />
                 </div>
-                <div className="h-[300px] w-full">
+                <div className="h-[280px] w-full">
                   <Glucosegraph />
                 </div>
-                <div className="h-[300px] w-full">
+                <div className="h-[280px] w-full">
                   <Activitylevelgraph />
                 </div>
               </div>
 
-              {/* Blood pressure - Reduced height */}
-              <div className="w-full">
-                <div className="h-[280px] w-full">
-                  <Bloodpressurgraph />
-                </div>
+              {/* Blood pressure - Fixed height container */}
+              <div className="w-full h-[260px]">
+                <Bloodpressurgraph />
               </div>
             </div>
           </div>

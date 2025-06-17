@@ -258,12 +258,12 @@ export function Ecggraph() {
   }
 
   return (
-    <Card className="w-full h-full flex flex-col">
+    <Card className="w-full h-full flex flex-col overflow-hidden">
       <CardHeader className="flex flex-col items-stretch border-b !p-0 sm:flex-row flex-shrink-0">
-        <div className="flex flex-1 flex-col justify-center gap-1 px-6 pb-3 sm:pb-0">
+        <div className="flex flex-1 flex-col justify-center gap-1 px-4 py-2 sm:px-6 sm:py-3">
           <div className="flex items-center gap-2">
-            <CardTitle className="text-base font-medium">ECG</CardTitle>
-            <HeartPulse className="h-4 w-4 text-red-500" />
+            <CardTitle className="text-sm font-medium">ECG</CardTitle>
+            <HeartPulse className="h-3 w-3 text-red-500" />
           </div>
           <CardDescription className="text-xs">Last 24 hours - {timeRanges.length} recordings</CardDescription>
         </div>
@@ -274,11 +274,11 @@ export function Ecggraph() {
               <button
                 key={chart}
                 data-active={activeChart === chart}
-                className="data-[active=true]:bg-muted/50 flex flex-1 flex-col justify-center gap-1 border-t px-4 py-3 text-left even:border-l sm:border-t-0 sm:border-l sm:px-6 sm:py-4"
+                className="data-[active=true]:bg-muted/50 flex flex-1 flex-col justify-center gap-1 border-t px-3 py-2 text-left even:border-l sm:border-t-0 sm:border-l sm:px-4 sm:py-3"
                 onClick={() => setActiveChart(chart)}
               >
                 <span className="text-muted-foreground text-xs">{chartConfig[chart].label}</span>
-                <span className="text-sm leading-none font-bold sm:text-base">View</span>
+                <span className="text-xs leading-none font-bold">View</span>
               </button>
             )
           })}
@@ -286,8 +286,8 @@ export function Ecggraph() {
       </CardHeader>
 
       {timeRanges.length > 0 && (
-        <div className="px-4 pt-3 flex gap-2 overflow-x-auto pb-2 flex-shrink-0">
-          {timeRanges.slice(0, 6).map((range, index) => ( // Limit to 6 buttons
+        <div className="px-3 pt-2 flex gap-1 overflow-x-auto pb-1 flex-shrink-0">
+          {timeRanges.slice(0, 5).map((range, index) => ( // Limit to 5 buttons
             <button
               key={index}
               onClick={() => handleRangeChange(index)}
@@ -301,7 +301,7 @@ export function Ecggraph() {
         </div>
       )}
 
-      <CardContent className="px-2 sm:p-4 flex-1 min-h-0">
+      <CardContent className="px-2 py-2 sm:p-3 flex-1 min-h-0 overflow-hidden">
         {error ? (
           <div className="flex h-full items-center justify-center text-sm text-red-500">{error}</div>
         ) : chartData.length > 0 ? (
@@ -310,10 +310,10 @@ export function Ecggraph() {
               <LineChart
                 data={chartData}
                 margin={{
-                  top: 10,
+                  top: 5,
                   right: 5,
                   left: 5,
-                  bottom: 10,
+                  bottom: 5,
                 }}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
@@ -321,14 +321,14 @@ export function Ecggraph() {
                   dataKey="index"
                   tickLine={false}
                   axisLine={false}
-                  tickMargin={8}
-                  tick={{ fontSize: 9 }}
+                  tickMargin={4}
+                  tick={{ fontSize: 8 }}
                   tickFormatter={(value) => {
                     // Show fewer ticks for readability
                     return value % 50 === 0 ? value.toString() : ""
                   }}
                 />
-                <YAxis tickLine={false} axisLine={false} tickMargin={8} tick={{ fontSize: 9 }} />
+                <YAxis tickLine={false} axisLine={false} tickMargin={4} tick={{ fontSize: 8 }} />
                 <ChartTooltip content={<ChartTooltipContent className="w-[150px]" nameKey="ecg" />} />
                 <Line
                   dataKey={activeChart}

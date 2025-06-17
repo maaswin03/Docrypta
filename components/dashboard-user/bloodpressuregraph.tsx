@@ -9,7 +9,7 @@ import { LocalStorageService } from "@/lib/localStorage"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { type ChartConfig, ChartContainer, ChartTooltip } from "@/components/ui/chart"
 
-export const description = "Blood pressure chart for last 12 records"
+export const description = "Blood pressure chart for last 8 records"
 
 const chartConfig = {
   systolic: {
@@ -98,7 +98,7 @@ export function Bloodpressurgraph() {
           .not("systolic_bp", "is", null)
           .not("diastolic_bp", "is", null)
           .order("timestamp", { ascending: false })
-          .limit(10) // Reduced to 10 for better display
+          .limit(8) // Reduced to 8 for better display
 
         if (deviceId) {
           query = query.eq("device_id", deviceId)
@@ -115,7 +115,7 @@ export function Bloodpressurgraph() {
         console.log("Blood pressure data found:", data?.length || 0, "records")
 
         if (!data || data.length === 0) {
-          setError("No blood pressure data found in last 10 records")
+          setError("No blood pressure data found in last 8 records")
           setLoading(false)
           return
         }
@@ -170,15 +170,15 @@ export function Bloodpressurgraph() {
   }
 
   return (
-    <Card className="w-full h-full flex flex-col">
+    <Card className="w-full h-full flex flex-col overflow-hidden">
       <CardHeader className="pb-2 flex-shrink-0">
         <div className="flex items-center justify-between">
-          <CardTitle className="text-base font-medium">Blood Pressure</CardTitle>
-          <Heart className="h-4 w-4 text-red-500" />
+          <CardTitle className="text-sm font-medium">Blood Pressure</CardTitle>
+          <Heart className="h-3 w-3 text-red-500" />
         </div>
-        <CardDescription className="text-xs">Last 10 records • Format: DD MMM HHPM</CardDescription>
+        <CardDescription className="text-xs">Last 8 records • Format: DD MMM HHPM</CardDescription>
       </CardHeader>
-      <CardContent className="pb-2 flex-1 min-h-0">
+      <CardContent className="pb-2 flex-1 min-h-0 overflow-hidden">
         {error ? (
           <div className="flex h-full items-center justify-center text-sm text-red-500">{error}</div>
         ) : chartData.length > 0 ? (
@@ -186,34 +186,34 @@ export function Bloodpressurgraph() {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart 
                 data={chartData} 
-                margin={{ top: 15, right: 5, left: 5, bottom: 35 }}
-                barCategoryGap="15%"
+                margin={{ top: 10, right: 5, left: 5, bottom: 25 }}
+                barCategoryGap="20%"
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
                 <XAxis
                   dataKey="time"
                   tickLine={false}
                   axisLine={false}
-                  tickMargin={8}
+                  tickMargin={4}
                   tick={{ fontSize: 8 }}
-                  interval={Math.floor(chartData.length / 5)} // Show ~5 labels max
+                  interval={Math.floor(chartData.length / 4)} // Show ~4 labels max
                   angle={-45}
                   textAnchor="end"
-                  height={50}
+                  height={40}
                 />
                 <YAxis 
                   tickLine={false} 
                   axisLine={false} 
-                  tickMargin={8} 
-                  tick={{ fontSize: 9 }} 
+                  tickMargin={4} 
+                  tick={{ fontSize: 8 }} 
                   domain={[40, 160]}
-                  width={35}
+                  width={30}
                 />
                 <Legend
                   verticalAlign="top"
-                  height={20}
+                  height={15}
                   iconType="circle"
-                  iconSize={4}
+                  iconSize={3}
                   formatter={(value) => <span className="text-xs">{value}</span>}
                 />
                 <ChartTooltip
@@ -238,8 +238,8 @@ export function Bloodpressurgraph() {
                     return null
                   }}
                 />
-                <Bar dataKey="systolic" fill="hsl(0, 100%, 65%)" radius={[2, 2, 0, 0]} maxBarSize={18} />
-                <Bar dataKey="diastolic" fill="hsl(215, 100%, 60%)" radius={[2, 2, 0, 0]} maxBarSize={18} />
+                <Bar dataKey="systolic" fill="hsl(0, 100%, 65%)" radius={[1, 1, 0, 0]} maxBarSize={15} />
+                <Bar dataKey="diastolic" fill="hsl(215, 100%, 60%)" radius={[1, 1, 0, 0]} maxBarSize={15} />
               </BarChart>
             </ResponsiveContainer>
           </ChartContainer>
@@ -251,7 +251,7 @@ export function Bloodpressurgraph() {
       </CardContent>
       <CardFooter className="pt-0 flex-shrink-0">
         {averages.systolic !== null && averages.diastolic !== null && (
-          <div className="flex w-full items-center justify-between text-sm">
+          <div className="flex w-full items-center justify-between text-xs">
             <div className="flex flex-col">
               <span className="text-muted-foreground">Avg Systolic</span>
               <span className="font-medium">{averages.systolic} mmHg</span>
