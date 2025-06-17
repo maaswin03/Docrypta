@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { InfoIcon, Activity, Thermometer, Droplets, Gauge, Wind, HeartPulse, Clock, Heart, Footprints } from "lucide-react";
+import { InfoIcon, Activity, Thermometer, Droplets, Gauge, Wind, HeartPulse, Clock, Heart, Footprints , Stethoscope} from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Collapsible,
