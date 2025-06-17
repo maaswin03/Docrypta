@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { HeartPulse, Eye, EyeOff, AlertCircle, Wallet, Mail, CheckCircle } from "lucide-react"
 import { useRouter } from "next/navigation"
 
@@ -21,7 +21,7 @@ import { useAuth } from "@/lib/auth-context"
 
 export function Signin({ className, ...props }: React.ComponentPropsWithoutRef<"div">) {
   const router = useRouter()
-  const { login } = useAuth()
+  const { login, user } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [errors, setErrors] = useState<ValidationError[]>([])
@@ -34,6 +34,15 @@ export function Signin({ className, ...props }: React.ComponentPropsWithoutRef<"
     email: "",
     password: "",
   })
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (user) {
+      const dashboardRoute = user.user_type === 'doctor' ? '/doctor/dashboard' : '/user/dashboard'
+      console.log('🔄 Already authenticated, redirecting to:', dashboardRoute)
+      router.replace(dashboardRoute)
+    }
+  }, [user, router])
 
   const getFieldError = (field: string) => {
     return errors.find((error) => error.field === field)?.message
@@ -69,6 +78,8 @@ export function Signin({ className, ...props }: React.ComponentPropsWithoutRef<"
     setIsLoading(true)
     setErrors([])
 
+    console.log('📧 Attempting email signin...')
+
     const validationErrors = validateEmailForm()
 
     if (validationErrors.length > 0) {
@@ -83,10 +94,11 @@ export function Signin({ className, ...props }: React.ComponentPropsWithoutRef<"
     })
 
     if (result.success && result.user) {
-      console.log('Email signin successful:', result.user)
+      console.log('✅ Email signin successful:', result.user.full_name)
       setSuccessUser(result.user)
       setShowSuccessDialog(true)
     } else {
+      console.log('❌ Email signin failed:', result.error)
       setErrors([{ field: "general", message: result.error || "Failed to sign in" }])
     }
 
@@ -102,15 +114,18 @@ export function Signin({ className, ...props }: React.ComponentPropsWithoutRef<"
     setIsLoading(true)
     setErrors([])
 
+    console.log('🔗 Attempting wallet signin...')
+
     const result = await signinWithWallet({
       walletAddress: connection.address,
     })
 
     if (result.success && result.user) {
-      console.log('Wallet signin successful:', result.user)
+      console.log('✅ Wallet signin successful:', result.user.full_name)
       setSuccessUser(result.user)
       setShowSuccessDialog(true)
     } else {
+      console.log('❌ Wallet signin failed:', result.error)
       setErrors([{ field: "wallet", message: result.error || "Failed to sign in with wallet" }])
     }
 
@@ -118,19 +133,26 @@ export function Signin({ className, ...props }: React.ComponentPropsWithoutRef<"
   }
 
   const handleSuccessDialogClose = () => {
+    console.log('🎉 Processing successful login for:', successUser?.full_name)
     setShowSuccessDialog(false)
+    
     if (successUser) {
-      console.log('Processing successful login for:', successUser.full_name)
-      // Use the auth context login method
+      // Use the auth context login method which will handle the redirect
       login(successUser)
-      
-      // The AuthProvider will handle the redirect automatically
-      // No manual navigation needed here
     }
   }
 
   const isEmailFormValid = formData.email && formData.password
   const isWalletFormValid = connection.isConnected
+
+  // Don't render if user is already authenticated
+  if (user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
 
   return (
     <>

@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/lib/auth-context'
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -15,50 +15,50 @@ export function ProtectedRoute({
   allowedRoles = ['doctor', 'user'],
   redirectTo = '/signin'
 }: ProtectedRouteProps) {
-  const { user, isLoading } = useAuth()
+  const { user, isLoading, isInitialized } = useAuth()
   const router = useRouter()
+  const [shouldRender, setShouldRender] = useState(false)
 
   useEffect(() => {
-    if (isLoading) return
+    // Wait for auth to be initialized
+    if (!isInitialized) {
+      console.log('⏳ Waiting for auth initialization...')
+      return
+    }
 
-    console.log('ProtectedRoute check:', { 
+    console.log('🛡️ ProtectedRoute check:', { 
       user: user?.full_name, 
       userType: user?.user_type, 
       allowedRoles,
-      isAuthenticated: !!user 
+      isAuthenticated: !!user,
+      isInitialized
     })
 
     if (!user) {
-      console.log('No user found, redirecting to:', redirectTo)
-      router.push(redirectTo)
+      console.log('❌ No user found, redirecting to:', redirectTo)
+      router.replace(redirectTo)
+      setShouldRender(false)
       return
     }
 
     if (!allowedRoles.includes(user.user_type)) {
-      console.log('User role not allowed, redirecting to 404')
-      router.push('/404')
+      console.log('🚫 User role not allowed, showing 404')
+      router.replace('/404')
+      setShouldRender(false)
       return
     }
-  }, [user, isLoading, allowedRoles, redirectTo, router])
 
-  if (isLoading) {
+    console.log('✅ Access granted, rendering protected content')
+    setShouldRender(true)
+  }, [user, isLoading, isInitialized, allowedRoles, redirectTo, router])
+
+  // Show loading while auth is initializing or checking
+  if (!isInitialized || isLoading || !shouldRender) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     )
-  }
-
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    )
-  }
-
-  if (!allowedRoles.includes(user.user_type)) {
-    return null
   }
 
   return <>{children}</>

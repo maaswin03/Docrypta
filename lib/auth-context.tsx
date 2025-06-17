@@ -15,6 +15,7 @@ interface User {
 interface AuthContextType {
   user: User | null
   isLoading: boolean
+  isInitialized: boolean
   login: (userData: User) => void
   logout: () => void
   isAuthenticated: boolean
@@ -41,6 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const checkSession = () => {
       try {
+        console.log('🔍 Checking existing session...')
         const storedUser = localStorage.getItem('user')
         const sessionExpiry = localStorage.getItem('sessionExpiry')
         
@@ -52,102 +54,65 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             // Session is still valid
             const userData = JSON.parse(storedUser)
             setUser(userData)
-            console.log('Session restored for user:', userData.full_name, 'Type:', userData.user_type)
+            console.log('✅ Session restored for user:', userData.full_name, 'Type:', userData.user_type)
           } else {
             // Session expired, clear storage
-            console.log('Session expired, clearing storage')
+            console.log('⏰ Session expired, clearing storage')
             localStorage.removeItem('user')
             localStorage.removeItem('sessionExpiry')
           }
         } else {
-          console.log('No stored session found')
+          console.log('❌ No stored session found')
         }
       } catch (error) {
-        console.error('Error checking session:', error)
+        console.error('❌ Error checking session:', error)
         localStorage.removeItem('user')
         localStorage.removeItem('sessionExpiry')
       } finally {
         setIsLoading(false)
         setIsInitialized(true)
+        console.log('🏁 Auth initialization complete')
       }
     }
 
     checkSession()
   }, [])
 
-  // Route protection logic - only run after initialization
+  // Simplified route protection - only handle basic redirects
   useEffect(() => {
-    if (!isInitialized || isLoading) return
+    if (!isInitialized) return
 
-    console.log('Route protection check:', { 
+    console.log('🛡️ Route protection check:', { 
       pathname, 
       user: user?.full_name, 
       userType: user?.user_type,
       isAuthenticated: !!user 
     })
 
-    const publicRoutes = ['/signin', '/signup/user', '/signup/doctor', '/test', '/']
-    const isPublicRoute = publicRoutes.some(route => 
-      pathname === route || (route !== '/' && pathname.startsWith(route))
-    )
-
-    // Handle root path
+    // Handle root path redirect
     if (pathname === '/') {
       if (user) {
         const dashboardRoute = user.user_type === 'doctor' ? '/doctor/dashboard' : '/user/dashboard'
-        console.log('Redirecting authenticated user from root to:', dashboardRoute)
-        router.push(dashboardRoute)
+        console.log('🏠 Redirecting authenticated user from root to:', dashboardRoute)
+        router.replace(dashboardRoute)
       } else {
-        console.log('Redirecting unauthenticated user from root to signin')
-        router.push('/signin')
+        console.log('🏠 Redirecting unauthenticated user from root to signin')
+        router.replace('/signin')
       }
       return
     }
 
-    // Handle unauthenticated users
-    if (!user && !isPublicRoute) {
-      console.log('Unauthenticated user accessing protected route, redirecting to signin')
-      router.push('/signin')
-      return
-    }
-
-    // Handle authenticated users on public routes
+    // Handle authenticated users on auth pages
     if (user && (pathname === '/signin' || pathname.startsWith('/signup'))) {
       const dashboardRoute = user.user_type === 'doctor' ? '/doctor/dashboard' : '/user/dashboard'
-      console.log('Authenticated user on public route, redirecting to:', dashboardRoute)
-      router.push(dashboardRoute)
+      console.log('🔄 Authenticated user on auth page, redirecting to:', dashboardRoute)
+      router.replace(dashboardRoute)
       return
     }
-
-    // Handle authenticated users
-    if (user) {
-      const isDoctorRoute = pathname.startsWith('/doctor/')
-      const isUserRoute = pathname.startsWith('/user/')
-      const isDashboardRoute = pathname === '/dashboard'
-
-      if (isDoctorRoute && user.user_type !== 'doctor') {
-        console.log('User trying to access doctor route, redirecting to 404')
-        router.push('/404')
-        return
-      }
-
-      if (isUserRoute && user.user_type !== 'user') {
-        console.log('Doctor trying to access user route, redirecting to 404')
-        router.push('/404')
-        return
-      }
-
-      if (isDashboardRoute) {
-        const dashboardRoute = user.user_type === 'doctor' ? '/doctor/dashboard' : '/user/dashboard'
-        console.log('Redirecting generic dashboard to specific dashboard:', dashboardRoute)
-        router.push(dashboardRoute)
-        return
-      }
-    }
-  }, [user, isLoading, isInitialized, pathname, router])
+  }, [user, isInitialized, pathname, router])
 
   const login = (userData: User) => {
-    console.log('Logging in user:', userData.full_name, 'Type:', userData.user_type)
+    console.log('🔐 Logging in user:', userData.full_name, 'Type:', userData.user_type)
     setUser(userData)
     
     // Set session expiry to 30 days from now
@@ -157,20 +122,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('user', JSON.stringify(userData))
     localStorage.setItem('sessionExpiry', expiryDate.toISOString())
     
-    // Don't redirect here - let the useEffect handle it
+    // Immediate redirect after login
+    const dashboardRoute = userData.user_type === 'doctor' ? '/doctor/dashboard' : '/user/dashboard'
+    console.log('🚀 Redirecting after login to:', dashboardRoute)
+    router.replace(dashboardRoute)
   }
 
   const logout = () => {
-    console.log('Logging out user')
+    console.log('🚪 Logging out user')
     setUser(null)
     localStorage.removeItem('user')
     localStorage.removeItem('sessionExpiry')
-    router.push('/signin')
+    router.replace('/signin')
   }
 
   const value: AuthContextType = {
     user,
     isLoading,
+    isInitialized,
     login,
     logout,
     isAuthenticated: !!user,
