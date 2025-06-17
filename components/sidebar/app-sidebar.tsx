@@ -44,17 +44,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: "Dashboard",
       url: "/user/dashboard",
       icon: Activity,
-      isActive: true,
-      items: [
-        {
-          title: "Health Vitals",
-          url: "/user/dashboard",
-        },
-        {
-          title: "Recent Activity",
-          url: "/user/dashboard/activity",
-        },
-      ],
     },
     {
       title: "Wellness Insights",
