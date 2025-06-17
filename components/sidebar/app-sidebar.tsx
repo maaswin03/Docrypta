@@ -74,24 +74,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: "Wallet",
       url: "/user/wallet",
       icon: Wallet,
-      items: [
-        {
-          title: "Balance",
-          url: "/user/wallet/balance",
-        },
-        {
-          title: "Transactions",
-          url: "/user/wallet/transactions",
-        },
-        {
-          title: "Payment Methods",
-          url: "/user/wallet/payment-methods",
-        },
-        {
-          title: "Rewards",
-          url: "/user/wallet/rewards",
-        },
-      ],
     },
     {
       title: "Alerts",
