@@ -83,8 +83,8 @@ export default function Page() {
                 </div>
               </div>
 
-              {/* Blood pressure - Increased height container */}
-              <div className="w-full h-[300px]">
+              {/* Blood pressure - Significantly increased height container */}
+              <div className="w-full h-[400px]">
                 <Bloodpressurgraph />
               </div>
             </div>

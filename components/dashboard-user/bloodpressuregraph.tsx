@@ -9,7 +9,7 @@ import { LocalStorageService } from "@/lib/localStorage"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { type ChartConfig, ChartContainer, ChartTooltip } from "@/components/ui/chart"
 
-export const description = "Blood pressure chart for last 6 records"
+export const description = "Blood pressure chart for last 24 hours"
 
 const chartConfig = {
   systolic: {
@@ -91,14 +91,18 @@ export function Bloodpressurgraph() {
           return
         }
 
+        // Get data from last 24 hours
+        const twentyFourHoursAgo = new Date()
+        twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24)
+
         let query = supabase
           .from("vitals_data")
           .select("systolic_bp, diastolic_bp, timestamp")
           .eq("user_id", userId)
           .not("systolic_bp", "is", null)
           .not("diastolic_bp", "is", null)
+          .gte("timestamp", twentyFourHoursAgo.toISOString())
           .order("timestamp", { ascending: false })
-          .limit(6) // Reduced to 6 for better display in container
 
         if (deviceId) {
           query = query.eq("device_id", deviceId)
@@ -112,10 +116,10 @@ export function Bloodpressurgraph() {
           return
         }
 
-        console.log("Blood pressure data found:", data?.length || 0, "records")
+        console.log("Blood pressure data found:", data?.length || 0, "records in last 24 hours")
 
         if (!data || data.length === 0) {
-          setError("No blood pressure data found in last 6 records")
+          setError("No blood pressure data found in last 24 hours")
           setLoading(false)
           return
         }
@@ -134,7 +138,7 @@ export function Bloodpressurgraph() {
           }
         })
 
-        console.log("Formatted blood pressure data:", formattedData)
+        console.log("Formatted blood pressure data:", formattedData.length, "records")
 
         // Calculate averages
         const systolicSum = data.reduce((acc, item) => acc + Number(item.systolic_bp), 0)
@@ -176,7 +180,7 @@ export function Bloodpressurgraph() {
           <CardTitle className="text-base font-medium">Blood Pressure</CardTitle>
           <Heart className="h-4 w-4 text-red-500" />
         </div>
-        <CardDescription className="text-xs">Last 6 records • Format: DD MMM HHPM</CardDescription>
+        <CardDescription className="text-xs">Last 24 hours • Format: DD MMM HHPM</CardDescription>
       </CardHeader>
       <CardContent className="pb-3 flex-1 min-h-0 overflow-hidden">
         {error ? (
@@ -186,8 +190,8 @@ export function Bloodpressurgraph() {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart 
                 data={chartData} 
-                margin={{ top: 20, right: 10, left: 10, bottom: 30 }}
-                barCategoryGap="25%"
+                margin={{ top: 20, right: 10, left: 10, bottom: 40 }}
+                barCategoryGap="20%"
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
                 <XAxis
@@ -196,10 +200,10 @@ export function Bloodpressurgraph() {
                   axisLine={false}
                   tickMargin={6}
                   tick={{ fontSize: 9 }}
-                  interval={0} // Show all labels since we only have 6
+                  interval={Math.floor(chartData.length / 8)} // Show ~8 labels across 24 hours
                   angle={-35}
                   textAnchor="end"
-                  height={40}
+                  height={50}
                 />
                 <YAxis 
                   tickLine={false} 
@@ -238,8 +242,8 @@ export function Bloodpressurgraph() {
                     return null
                   }}
                 />
-                <Bar dataKey="systolic" fill="hsl(0, 100%, 65%)" radius={[2, 2, 0, 0]} maxBarSize={16} />
-                <Bar dataKey="diastolic" fill="hsl(215, 100%, 60%)" radius={[2, 2, 0, 0]} maxBarSize={16} />
+                <Bar dataKey="systolic" fill="hsl(0, 100%, 65%)" radius={[2, 2, 0, 0]} maxBarSize={14} />
+                <Bar dataKey="diastolic" fill="hsl(215, 100%, 60%)" radius={[2, 2, 0, 0]} maxBarSize={14} />
               </BarChart>
             </ResponsiveContainer>
           </ChartContainer>
