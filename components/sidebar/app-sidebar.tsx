@@ -79,24 +79,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: "Alerts",
       url: "/user/alerts",
       icon: Bell,
-      items: [
-        {
-          title: "Health Alerts",
-          url: "/user/alerts/health",
-        },
-        {
-          title: "Medication Reminders",
-          url: "/user/alerts/medications",
-        },
-        {
-          title: "Appointment Reminders",
-          url: "/user/alerts/appointments",
-        },
-        {
-          title: "Settings",
-          url: "/user/alerts/settings",
-        },
-      ],
     },
   ]
 
