@@ -29,8 +29,8 @@ export default function Page() {
     <ProtectedRoute allowedRoles={['user']}>
       <SidebarProvider>
         <AppSidebar />
-        <SidebarInset>
-          <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+        <SidebarInset className="flex flex-col min-h-screen overflow-hidden">
+          <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 border-b">
             <div className="flex items-center gap-2 px-4">
               <SidebarTrigger className="-ml-1" />
               <Separator orientation="vertical" className="mr-2 h-4" />
@@ -47,40 +47,50 @@ export default function Page() {
               </Breadcrumb>
             </div>
           </header>
-          <div className="flex flex-1 flex-col gap-4 p-4 pt-0 w-full overflow-hidden">
-            {/* Latest Vitals Summary */}
-            <LatestVitalsSummary />
+          
+          {/* Main content area with proper scrolling */}
+          <div className="flex-1 overflow-y-auto">
+            <div className="p-4 space-y-6 max-w-full">
+              {/* Latest Vitals Summary */}
+              <div className="w-full">
+                <LatestVitalsSummary />
+              </div>
 
-            {/* ECG Graph - Full width */}
-            <div className="w-full">
-              <Ecggraph />
-            </div>
+              {/* ECG Graph - Full width with constrained height */}
+              <div className="w-full">
+                <div className="h-[350px] w-full">
+                  <Ecggraph />
+                </div>
+              </div>
 
-            {/* Main vitals - Responsive grid with proper constraints */}
-            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-2 w-full">
-              <div className="w-full min-w-0">
-                <Heartgraph />
+              {/* Main vitals - Responsive grid with fixed heights */}
+              <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-2 2xl:grid-cols-3">
+                <div className="h-[300px] w-full">
+                  <Heartgraph />
+                </div>
+                <div className="h-[300px] w-full">
+                  <Spo2graph />
+                </div>
+                <div className="h-[300px] w-full">
+                  <Temperaturegraph />
+                </div>
+                <div className="h-[300px] w-full">
+                  <Respiratoryrategraph />
+                </div>
+                <div className="h-[300px] w-full">
+                  <Glucosegraph />
+                </div>
+                <div className="h-[300px] w-full">
+                  <Activitylevelgraph />
+                </div>
               </div>
-              <div className="w-full min-w-0">
-                <Spo2graph />
-              </div>
-              <div className="w-full min-w-0">
-                <Temperaturegraph />
-              </div>
-              <div className="w-full min-w-0">
-                <Respiratoryrategraph />
-              </div>
-              <div className="w-full min-w-0">
-                <Glucosegraph />
-              </div>
-              <div className="w-full min-w-0">
-                <Activitylevelgraph />
-              </div>
-            </div>
 
-            {/* Blood pressure - Full width */}
-            <div className="w-full">
-              <Bloodpressurgraph />
+              {/* Blood pressure - Reduced height */}
+              <div className="w-full">
+                <div className="h-[280px] w-full">
+                  <Bloodpressurgraph />
+                </div>
+              </div>
             </div>
           </div>
         </SidebarInset>

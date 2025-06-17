@@ -248,7 +248,7 @@ export function Ecggraph() {
 
   if (loading && timeRanges.length === 0) {
     return (
-      <Card>
+      <Card className="w-full h-full">
         <CardHeader>
           <CardTitle>ECG</CardTitle>
           <CardDescription>Loading...</CardDescription>
@@ -258,8 +258,8 @@ export function Ecggraph() {
   }
 
   return (
-    <Card className="py-4 sm:py-0 w-full">
-      <CardHeader className="flex flex-col items-stretch border-b !p-0 sm:flex-row">
+    <Card className="w-full h-full flex flex-col">
+      <CardHeader className="flex flex-col items-stretch border-b !p-0 sm:flex-row flex-shrink-0">
         <div className="flex flex-1 flex-col justify-center gap-1 px-6 pb-3 sm:pb-0">
           <div className="flex items-center gap-2">
             <CardTitle className="text-base font-medium">ECG</CardTitle>
@@ -274,11 +274,11 @@ export function Ecggraph() {
               <button
                 key={chart}
                 data-active={activeChart === chart}
-                className="data-[active=true]:bg-muted/50 flex flex-1 flex-col justify-center gap-1 border-t px-6 py-4 text-left even:border-l sm:border-t-0 sm:border-l sm:px-8 sm:py-6"
+                className="data-[active=true]:bg-muted/50 flex flex-1 flex-col justify-center gap-1 border-t px-4 py-3 text-left even:border-l sm:border-t-0 sm:border-l sm:px-6 sm:py-4"
                 onClick={() => setActiveChart(chart)}
               >
                 <span className="text-muted-foreground text-xs">{chartConfig[chart].label}</span>
-                <span className="text-lg leading-none font-bold sm:text-xl">View</span>
+                <span className="text-sm leading-none font-bold sm:text-base">View</span>
               </button>
             )
           })}
@@ -286,12 +286,12 @@ export function Ecggraph() {
       </CardHeader>
 
       {timeRanges.length > 0 && (
-        <div className="px-6 pt-4 flex gap-2 overflow-x-auto pb-2">
-          {timeRanges.map((range, index) => (
+        <div className="px-4 pt-3 flex gap-2 overflow-x-auto pb-2 flex-shrink-0">
+          {timeRanges.slice(0, 6).map((range, index) => ( // Limit to 6 buttons
             <button
               key={index}
               onClick={() => handleRangeChange(index)}
-              className={`text-xs px-3 py-1 rounded-full whitespace-nowrap ${
+              className={`text-xs px-2 py-1 rounded-full whitespace-nowrap flex-shrink-0 ${
                 selectedRange === index ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/80"
               }`}
             >
@@ -301,19 +301,19 @@ export function Ecggraph() {
         </div>
       )}
 
-      <CardContent className="px-2 sm:p-6">
+      <CardContent className="px-2 sm:p-4 flex-1 min-h-0">
         {error ? (
-          <div className="flex h-[250px] items-center justify-center text-sm text-red-500">{error}</div>
+          <div className="flex h-full items-center justify-center text-sm text-red-500">{error}</div>
         ) : chartData.length > 0 ? (
-          <ChartContainer config={chartConfig} className="aspect-auto h-[250px] w-full">
-            <ResponsiveContainer width="100%" height={250}>
+          <ChartContainer config={chartConfig} className="h-full w-full">
+            <ResponsiveContainer width="100%" height="100%">
               <LineChart
                 data={chartData}
                 margin={{
-                  top: 20,
+                  top: 10,
                   right: 5,
-                  left: 0,
-                  bottom: 5,
+                  left: 5,
+                  bottom: 10,
                 }}
               >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
@@ -322,13 +322,13 @@ export function Ecggraph() {
                   tickLine={false}
                   axisLine={false}
                   tickMargin={8}
-                  tick={{ fontSize: 10 }}
+                  tick={{ fontSize: 9 }}
                   tickFormatter={(value) => {
                     // Show fewer ticks for readability
                     return value % 50 === 0 ? value.toString() : ""
                   }}
                 />
-                <YAxis tickLine={false} axisLine={false} tickMargin={8} tick={{ fontSize: 10 }} />
+                <YAxis tickLine={false} axisLine={false} tickMargin={8} tick={{ fontSize: 9 }} />
                 <ChartTooltip content={<ChartTooltipContent className="w-[150px]" nameKey="ecg" />} />
                 <Line
                   dataKey={activeChart}
@@ -342,7 +342,7 @@ export function Ecggraph() {
             </ResponsiveContainer>
           </ChartContainer>
         ) : (
-          <div className="flex h-[250px] items-center justify-center text-sm text-muted-foreground">
+          <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
             {loading ? "Loading ECG data..." : "No ECG data available for this time period"}
           </div>
         )}
