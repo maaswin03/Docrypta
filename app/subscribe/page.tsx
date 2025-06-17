@@ -176,19 +176,19 @@ export default function SubscribePage() {
           </header>
           
           {/* Main content area with proper scrolling */}
-          <div className="flex-1 overflow-y-auto min-h-0 bg-gradient-to-br from-blue-50 via-white to-green-50">
+          <div className="flex-1 overflow-y-auto min-h-0">
             <div className="p-6 max-w-6xl mx-auto">
               {/* Header */}
               <div className="text-center mb-8">
                 <div className="flex justify-center mb-4">
-                  <div className="p-3 bg-blue-100 rounded-full">
-                    <Bot className="h-8 w-8 text-blue-600" />
+                  <div className="p-3 bg-primary/10 rounded-full">
+                    <Bot className="h-8 w-8 text-primary" />
                   </div>
                 </div>
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                <h1 className="text-3xl font-bold mb-2">
                   Unlock AI Health Assistant
                 </h1>
-                <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+                <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                   Subscribe for ₹50 (or 0.5 USDC) to access unlimited AI health queries for 30 days.
                   Get instant medical insights, symptom analysis, and personalized health recommendations.
                 </p>
@@ -196,10 +196,10 @@ export default function SubscribePage() {
 
               <div className="grid md:grid-cols-2 gap-8">
                 {/* Subscription Card */}
-                <Card className="shadow-lg border-0 bg-white">
+                <Card className="shadow-lg">
                   <CardHeader className="text-center pb-4">
                     <CardTitle className="text-xl font-semibold flex items-center justify-center gap-2">
-                      <Bot className="h-5 w-5 text-blue-600" />
+                      <Bot className="h-5 w-5 text-primary" />
                       Medibot Premium
                     </CardTitle>
                     <CardDescription>
@@ -210,8 +210,8 @@ export default function SubscribePage() {
                   <CardContent className="space-y-6">
                     {/* Pricing */}
                     <div className="text-center">
-                      <div className="text-3xl font-bold text-gray-900">₹50</div>
-                      <div className="text-sm text-gray-500">or 0.5 USDC</div>
+                      <div className="text-3xl font-bold">₹50</div>
+                      <div className="text-sm text-muted-foreground">or 0.5 USDC</div>
                       <Badge variant="secondary" className="mt-2">
                         <Clock className="h-3 w-3 mr-1" />
                         30 Days Access
@@ -222,8 +222,8 @@ export default function SubscribePage() {
 
                     {/* Features */}
                     <div className="space-y-3">
-                      <h4 className="font-medium text-gray-900">What's included:</h4>
-                      <ul className="space-y-2 text-sm text-gray-600">
+                      <h4 className="font-medium">What's included:</h4>
+                      <ul className="space-y-2 text-sm text-muted-foreground">
                         <li className="flex items-center gap-2">
                           <CheckCircle className="h-4 w-4 text-green-500" />
                           Unlimited AI health queries
@@ -252,23 +252,23 @@ export default function SubscribePage() {
                     {/* User Info */}
                     <div className="space-y-3">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="text-gray-500">User ID:</span>
-                        <span className="font-mono text-gray-900">{user?.id || 'Not found'}</span>
+                        <span className="text-muted-foreground">User ID:</span>
+                        <span className="font-mono">{user?.id || 'Not found'}</span>
                       </div>
                       
                       <div className="space-y-2">
-                        <span className="text-sm text-gray-500">Wallet Address:</span>
+                        <span className="text-sm text-muted-foreground">Wallet Address:</span>
                         {connection.isConnected ? (
                           <div className="flex items-center gap-2">
                             <CheckCircle className="h-4 w-4 text-green-500" />
-                            <span className="font-mono text-xs text-gray-900 break-all">
+                            <span className="font-mono text-xs break-all">
                               {connection.address}
                             </span>
                           </div>
                         ) : (
                           <div className="flex items-center gap-2">
                             <AlertCircle className="h-4 w-4 text-amber-500" />
-                            <span className="text-sm text-gray-500">Not connected</span>
+                            <span className="text-sm text-muted-foreground">Not connected</span>
                           </div>
                         )}
                       </div>
@@ -298,7 +298,7 @@ export default function SubscribePage() {
                         <Button 
                           onClick={handleSubscriptionPayment}
                           disabled={isProcessing}
-                          className="w-full bg-blue-600 hover:bg-blue-700"
+                          className="w-full"
                           size="lg"
                         >
                           <CreditCard className="h-4 w-4 mr-2" />
@@ -318,10 +318,10 @@ export default function SubscribePage() {
                 </Card>
 
                 {/* Benefits Card */}
-                <Card className="shadow-lg border-0 bg-gradient-to-br from-blue-50 to-green-50">
+                <Card className="shadow-lg">
                   <CardHeader>
                     <CardTitle className="text-xl font-semibold flex items-center gap-2">
-                      <Shield className="h-5 w-5 text-green-600" />
+                      <Shield className="h-5 w-5 text-primary" />
                       Why Choose Medibot?
                     </CardTitle>
                   </CardHeader>
@@ -329,36 +329,36 @@ export default function SubscribePage() {
                   <CardContent className="space-y-6">
                     <div className="space-y-4">
                       <div className="flex gap-3">
-                        <div className="p-2 bg-blue-100 rounded-lg flex-shrink-0">
-                          <Bot className="h-5 w-5 text-blue-600" />
+                        <div className="p-2 bg-primary/10 rounded-lg flex-shrink-0">
+                          <Bot className="h-5 w-5 text-primary" />
                         </div>
                         <div>
-                          <h4 className="font-medium text-gray-900">AI-Powered Insights</h4>
-                          <p className="text-sm text-gray-600">
+                          <h4 className="font-medium">AI-Powered Insights</h4>
+                          <p className="text-sm text-muted-foreground">
                             Get instant medical insights powered by advanced AI trained on medical literature.
                           </p>
                         </div>
                       </div>
 
                       <div className="flex gap-3">
-                        <div className="p-2 bg-green-100 rounded-lg flex-shrink-0">
-                          <Shield className="h-5 w-5 text-green-600" />
+                        <div className="p-2 bg-primary/10 rounded-lg flex-shrink-0">
+                          <Shield className="h-5 w-5 text-primary" />
                         </div>
                         <div>
-                          <h4 className="font-medium text-gray-900">Privacy First</h4>
-                          <p className="text-sm text-gray-600">
+                          <h4 className="font-medium">Privacy First</h4>
+                          <p className="text-sm text-muted-foreground">
                             Your health conversations are encrypted and never shared with third parties.
                           </p>
                         </div>
                       </div>
 
                       <div className="flex gap-3">
-                        <div className="p-2 bg-purple-100 rounded-lg flex-shrink-0">
-                          <Clock className="h-5 w-5 text-purple-600" />
+                        <div className="p-2 bg-primary/10 rounded-lg flex-shrink-0">
+                          <Clock className="h-5 w-5 text-primary" />
                         </div>
                         <div>
-                          <h4 className="font-medium text-gray-900">24/7 Availability</h4>
-                          <p className="text-sm text-gray-600">
+                          <h4 className="font-medium">24/7 Availability</h4>
+                          <p className="text-sm text-muted-foreground">
                             Access health guidance anytime, anywhere, without waiting for appointments.
                           </p>
                         </div>
@@ -367,9 +367,9 @@ export default function SubscribePage() {
 
                     <Separator />
 
-                    <div className="bg-white p-4 rounded-lg">
-                      <h4 className="font-medium text-gray-900 mb-2">Important Note</h4>
-                      <p className="text-xs text-gray-600">
+                    <div className="bg-muted p-4 rounded-lg">
+                      <h4 className="font-medium mb-2">Important Note</h4>
+                      <p className="text-xs text-muted-foreground">
                         Medibot provides general health information and should not replace professional medical advice. 
                         Always consult with healthcare professionals for serious medical concerns.
                       </p>

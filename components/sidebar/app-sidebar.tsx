@@ -44,14 +44,29 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: "Dashboard",
       url: "/user/dashboard",
       icon: Activity,
-            items: [
+      items: [
         {
-          title: "Overview",
-          url: "/doctor/dashboard",
+          title: "Health Vitals",
+          url: "/user/dashboard",
         },
         {
-          title: "Today's Schedule",
-          url: "/doctor/dashboard/schedule",
+          title: "Overview",
+          url: "/user/dashboard/overview",
+        },
+      ],
+    },
+    {
+      title: "AI Assistant",
+      url: "/user/medibot",
+      icon: Bot,
+      items: [
+        {
+          title: "Chat with Medibot",
+          url: "/user/medibot",
+        },
+        {
+          title: "Subscribe",
+          url: "/subscribe",
         },
       ],
     },
@@ -69,11 +84,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: "Core Care Plan",
       url: "/user/care-plan",
       icon: HeartHandshake,
-    },
-    {
-      title: "MediBot",
-      url: "/user/medibot",
-      icon: Bot,
     },
     {
       title: "Products",

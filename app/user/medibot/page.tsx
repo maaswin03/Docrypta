@@ -263,12 +263,12 @@ export default function MedibotPage() {
               </div>
             </header>
             
-            <div className="flex-1 overflow-y-auto min-h-0 bg-gradient-to-br from-blue-50 via-white to-green-50 flex items-center justify-center p-4">
+            <div className="flex-1 overflow-y-auto min-h-0 flex items-center justify-center p-4">
               <Card className="w-full max-w-md text-center shadow-lg">
                 <CardHeader>
                   <div className="flex justify-center mb-4">
-                    <div className="p-3 bg-blue-100 rounded-full">
-                      <Bot className="h-8 w-8 text-blue-600" />
+                    <div className="p-3 bg-primary/10 rounded-full">
+                      <Bot className="h-8 w-8 text-primary" />
                     </div>
                   </div>
                   <CardTitle className="text-xl">Subscription Required</CardTitle>
@@ -284,14 +284,14 @@ export default function MedibotPage() {
                     </Alert>
                   )}
                   
-                  <div className="text-sm text-gray-600">
+                  <div className="text-sm text-muted-foreground">
                     <p>Get unlimited AI health queries for just ₹50 (or 0.5 USDC) for 30 days.</p>
                   </div>
                   
                   <div className="space-y-2">
                     <Button 
                       onClick={() => router.push('/subscribe')}
-                      className="w-full bg-blue-600 hover:bg-blue-700"
+                      className="w-full"
                     >
                       <CreditCard className="h-4 w-4 mr-2" />
                       Subscribe Now
@@ -337,15 +337,15 @@ export default function MedibotPage() {
             </div>
           </header>
           
-          <div className="flex-1 overflow-y-auto min-h-0 bg-gradient-to-br from-blue-50 via-white to-green-50">
+          <div className="flex-1 overflow-y-auto min-h-0">
             <div className="p-4 max-w-4xl mx-auto h-full flex flex-col">
               {/* Subscription Status Header */}
               <Card className="mb-4 shadow-sm flex-shrink-0">
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-100 rounded-full">
-                        <Bot className="h-6 w-6 text-blue-600" />
+                      <div className="p-2 bg-primary/10 rounded-full">
+                        <Bot className="h-6 w-6 text-primary" />
                       </div>
                       <div>
                         <CardTitle className="text-lg">Medibot AI Assistant</CardTitle>
@@ -354,7 +354,7 @@ export default function MedibotPage() {
                     </div>
                     
                     <div className="flex items-center gap-2">
-                      <Badge variant="secondary" className="bg-green-100 text-green-700">
+                      <Badge variant="secondary" className="bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300">
                         <CheckCircle className="h-3 w-3 mr-1" />
                         Active
                       </Badge>
@@ -401,14 +401,14 @@ export default function MedibotPage() {
                           <div
                             className={`max-w-[80%] rounded-lg p-3 ${
                               message.type === 'user'
-                                ? 'bg-blue-600 text-white'
-                                : 'bg-gray-100 text-gray-900'
+                                ? 'bg-primary text-primary-foreground'
+                                : 'bg-muted text-foreground'
                             }`}
                           >
                             <div className="text-sm">{message.content}</div>
                             <div
                               className={`text-xs mt-1 ${
-                                message.type === 'user' ? 'text-blue-100' : 'text-gray-500'
+                                message.type === 'user' ? 'text-primary-foreground/70' : 'text-muted-foreground'
                               }`}
                             >
                               {formatDate(message.timestamp)}
@@ -419,11 +419,11 @@ export default function MedibotPage() {
                       
                       {isTyping && (
                         <div className="flex justify-start">
-                          <div className="bg-gray-100 rounded-lg p-3">
+                          <div className="bg-muted rounded-lg p-3">
                             <div className="flex items-center space-x-1">
-                              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                              <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce"></div>
+                              <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                              <div className="w-2 h-2 bg-muted-foreground rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                             </div>
                           </div>
                         </div>
@@ -449,13 +449,12 @@ export default function MedibotPage() {
                       <Button 
                         onClick={handleSendMessage}
                         disabled={!inputValue.trim() || isTyping}
-                        className="bg-blue-600 hover:bg-blue-700"
                       >
                         <Send className="h-4 w-4" />
                       </Button>
                     </div>
                     
-                    <div className="mt-2 text-xs text-gray-500">
+                    <div className="mt-2 text-xs text-muted-foreground">
                       <strong>Disclaimer:</strong> Medibot provides general health information and should not replace professional medical advice.
                     </div>
                   </div>
