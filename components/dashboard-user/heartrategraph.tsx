@@ -206,7 +206,7 @@ export function Heartgraph() {
                             <span className="text-[0.70rem] uppercase text-muted-foreground">Time</span>
                             <span className="font-bold">{data.fullTime}</span>
                             <span className="text-[0.70rem] uppercase text-muted-foreground">Heart Rate</span>
-                            <span className="font-bold text-blue-600">{data.heart_rate} BPM</span>
+                            <span className="font-bold">{data.heart_rate} BPM</span>
                           </div>
                         </div>
                       )
