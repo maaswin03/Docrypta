@@ -209,11 +209,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       url: "/user/records",
       icon: FileText,
     },
-    {
-      name: "Insurance",
-      url: "/user/insurance",
-      icon: CreditCard,
-    },
   ]
 
   // Doctor projects/quick access
