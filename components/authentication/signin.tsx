@@ -17,9 +17,11 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { signinUser, signinWithWallet } from "@/lib/auth"
 import { validateEmail, validatePassword, type ValidationError } from "@/lib/validation"
 import { useWallet } from "@/hooks/useWallet"
+import { useAuth } from "@/lib/auth-context"
 
 export function Signin({ className, ...props }: React.ComponentPropsWithoutRef<"div">) {
   const router = useRouter()
+  const { login } = useAuth()
   const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [errors, setErrors] = useState<ValidationError[]>([])
@@ -116,15 +118,12 @@ export function Signin({ className, ...props }: React.ComponentPropsWithoutRef<"
   const handleSuccessDialogClose = () => {
     setShowSuccessDialog(false)
     if (successUser) {
+      // Use the auth context login method
+      login(successUser)
       
-      localStorage.setItem("user", JSON.stringify(successUser))
-
-      
-      if (successUser.user_type === "doctor") {
-        router.push("/doctor/dashboard")
-      } else {
-        router.push("/user/dashboard")
-      }
+      // Navigate to appropriate dashboard
+      const dashboardRoute = successUser.user_type === "doctor" ? "/doctor/dashboard" : "/user/dashboard"
+      router.push(dashboardRoute)
     }
   }
 

@@ -1,3 +1,4 @@
+import { ProtectedRoute } from "@/components/auth/protected-route";
 import { Activitylevelgraph } from "@/components/dashboard-user/activitylevelgraph";
 import { Bloodpressurgraph } from "@/components/dashboard-user/bloodpressuregraph";
 import { Ecggraph } from "@/components/dashboard-user/ecggraph";
@@ -25,60 +26,62 @@ import {
 
 export default function Page() {
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-          <div className="flex items-center gap-2 px-4">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 h-4" />
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink href="#">Patient Dashboard</BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="hidden md:block" />
-                <BreadcrumbItem>
-                  <BreadcrumbPage>Health Vitals</BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-          </div>
-        </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0 max-w-full overflow-hidden">
-          {/* Latest Vitals Summary */}
-          <LatestVitalsSummary />
+    <ProtectedRoute allowedRoles={['user']}>
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset>
+          <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+            <div className="flex items-center gap-2 px-4">
+              <SidebarTrigger className="-ml-1" />
+              <Separator orientation="vertical" className="mr-2 h-4" />
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem className="hidden md:block">
+                    <BreadcrumbLink href="#">Patient Dashboard</BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator className="hidden md:block" />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>Health Vitals</BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
+            </div>
+          </header>
+          <div className="flex flex-1 flex-col gap-4 p-4 pt-0 max-w-full overflow-hidden">
+            {/* Latest Vitals Summary */}
+            <LatestVitalsSummary />
 
-          <Ecggraph />
+            <Ecggraph />
 
-          {/* Main vitals - Responsive grid */}
-          <div className="grid gap-4 grid-cols-1  md:grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-2">
-            <div className="min-w-0">
-              <Heartgraph />
+            {/* Main vitals - Responsive grid */}
+            <div className="grid gap-4 grid-cols-1  md:grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-2">
+              <div className="min-w-0">
+                <Heartgraph />
+              </div>
+              <div className="min-w-0">
+                <Spo2graph />
+              </div>
+              <div className="min-w-0">
+                <Temperaturegraph />
+              </div>
+              <div className="min-w-0">
+                <Respiratoryrategraph />
+              </div>
+              <div className="min-w-0">
+                <Glucosegraph />
+              </div>
+              <div className="min-w-0">
+                <Activitylevelgraph />
+              </div>
             </div>
-            <div className="min-w-0">
-              <Spo2graph />
-            </div>
-            <div className="min-w-0">
-              <Temperaturegraph />
-            </div>
-            <div className="min-w-0">
-              <Respiratoryrategraph />
-            </div>
-            <div className="min-w-0">
-              <Glucosegraph />
-            </div>
-            <div className="min-w-0">
-              <Activitylevelgraph />
+
+            {/* Blood pressure - Full width */}
+            <div className="w-full">
+              <Bloodpressurgraph />
             </div>
           </div>
-
-          {/* Blood pressure - Full width */}
-          <div className="w-full">
-            <Bloodpressurgraph />
-          </div>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+        </SidebarInset>
+      </SidebarProvider>
+    </ProtectedRoute>
   );
 }
