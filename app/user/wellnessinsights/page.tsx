@@ -37,7 +37,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { InfoIcon, Activity, Thermometer, Droplets, Gauge, Wind, HeartPulse } from "lucide-react";
+import { InfoIcon, Activity, Thermometer, Droplets, Gauge, Wind, HeartPulse, Clock, Heart, Footprints } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Collapsible,
@@ -73,6 +73,8 @@ type VitalsData = {
   age?: string;
   gender?: string;
   lastUpdated?: string;
+  glucoseLevel?: number;
+  activityLevel?: any;
 };
 
 type SensorData = {
@@ -83,6 +85,8 @@ type SensorData = {
   systolic_bp?: number;
   diastolic_bp?: number;
   respiratory_rate?: number;
+  glucose_level?: number;
+  activity_level?: any;
   age?: number;
   gender?: string;
   timestamp?: string;
@@ -181,6 +185,7 @@ export default function WellnessInsightsPage() {
   const [hasVitalsData, setHasVitalsData] = React.useState<boolean>(false);
   const [vitalsData, setVitalsData] = React.useState<SensorData>({});
   const [lastUpdated, setLastUpdated] = React.useState<string | null>(null);
+  const [vitalsHistory, setVitalsHistory] = React.useState<SensorData[]>([]);
 
   // Initialize age and gender from user data
   React.useEffect(() => {
@@ -227,6 +232,8 @@ export default function WellnessInsightsPage() {
         systolic_bp: latestVitals.systolic_bp,
         diastolic_bp: latestVitals.diastolic_bp,
         respiratory_rate: latestVitals.respiratory_rate,
+        glucose_level: latestVitals.glucose_level,
+        activity_level: latestVitals.activity_level,
         timestamp: latestVitals.timestamp,
       });
 
@@ -243,12 +250,26 @@ export default function WellnessInsightsPage() {
         temperature: latestVitals.temperature,
         oxygenLevel: latestVitals.spo2,
         respiratoryRate: latestVitals.respiratory_rate,
+        glucoseLevel: latestVitals.glucose_level,
+        activityLevel: latestVitals.activity_level,
         age: age,
         gender: gender,
         lastUpdated: latestVitals.timestamp,
       };
 
       setVitals(vitalsForPrediction);
+      
+      // Also fetch the last 7 records for history
+      const { data: historyData, error: historyError } = await supabase
+        .from("vitals_data")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("timestamp", { ascending: false })
+        .limit(7);
+        
+      if (!historyError && historyData && historyData.length > 0) {
+        setVitalsHistory(historyData);
+      }
       
       toast({
         title: "Vitals data loaded",
@@ -412,6 +433,25 @@ export default function WellnessInsightsPage() {
       icon: <Gauge className="h-5 w-5 text-green-500" />,
       color: "bg-green-50 text-green-500",
     },
+    {
+      title: "Glucose Level",
+      value: vitalsData.glucose_level ?? "--",
+      unit: "mg/dL",
+      description: "Blood sugar",
+      icon: <Droplets className="h-5 w-5 text-yellow-500" />,
+      color: "bg-yellow-50 text-yellow-500",
+    },
+    {
+      title: "Activity",
+      value: vitalsData.activity_level?.activity_type 
+        ? vitalsData.activity_level.activity_type.charAt(0).toUpperCase() + 
+          vitalsData.activity_level.activity_type.slice(1)
+        : "--",
+      unit: "",
+      description: "Current activity",
+      icon: <Footprints className="h-5 w-5 text-teal-500" />,
+      color: "bg-teal-50 text-teal-500",
+    },
   ];
 
   const severityColor = (severity?: string) => {
@@ -476,7 +516,8 @@ export default function WellnessInsightsPage() {
                 </div>
                 
                 {lastUpdated && (
-                  <div className="text-sm text-muted-foreground bg-muted px-3 py-1 rounded-md">
+                  <div className="text-sm text-muted-foreground bg-muted px-3 py-1 rounded-md flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
                     Last updated: {formatDate(lastUpdated)}
                   </div>
                 )}
@@ -488,6 +529,88 @@ export default function WellnessInsightsPage() {
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
               )}
+
+              {/* Current Vitals Summary */}
+              <Card className="shadow-md">
+                <CardHeader>
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Heart className="h-5 w-5 text-primary" />
+                    Current Health Metrics
+                  </CardTitle>
+                  <CardDescription>
+                    Latest readings from your health monitoring devices
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {vitalsLoading ? (
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                      {Array(8).fill(0).map((_, i) => (
+                        <div key={i} className="p-4 border rounded-lg">
+                          <div className="flex items-center gap-3 mb-2">
+                            <Skeleton className="h-10 w-10 rounded-full" />
+                            <div className="space-y-2">
+                              <Skeleton className="h-4 w-20" />
+                              <Skeleton className="h-3 w-16" />
+                            </div>
+                          </div>
+                          <Skeleton className="h-6 w-24 mt-2" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                      {metrics.map((metric, index) => (
+                        <div key={index} className="p-4 border rounded-lg hover:shadow-md transition-shadow">
+                          <div className="flex items-center gap-3 mb-2">
+                            <div className={`p-2 rounded-full ${metric.color}`}>
+                              {metric.icon}
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium">
+                                {metric.title}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {metric.description}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-end gap-2">
+                            <p className="text-2xl font-bold">
+                              {metric.value}
+                              {metric.unit && (
+                                <span className="text-base font-normal text-muted-foreground ml-1">
+                                  {metric.unit}
+                                </span>
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+                <CardFooter className="border-t pt-4 flex justify-between">
+                  <div className="text-sm text-muted-foreground">
+                    Data synced from your BioWear device
+                  </div>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    onClick={fetchVitalsData}
+                    disabled={vitalsLoading}
+                    className="gap-2"
+                  >
+                    {vitalsLoading ? (
+                      <>
+                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                        Refreshing...
+                      </>
+                    ) : (
+                      <>Refresh Data</>
+                    )}
+                  </Button>
+                </CardFooter>
+              </Card>
 
               <Tabs
                 value={activeTab}
@@ -510,7 +633,8 @@ export default function WellnessInsightsPage() {
                   {/* Vitals Assessment Card */}
                   <Card className="shadow-sm">
                     <CardHeader>
-                      <CardTitle className="text-xl">
+                      <CardTitle className="text-xl flex items-center gap-2">
+                        <Activity className="h-5 w-5 text-primary" />
                         Automatic Assessment from Vitals
                       </CardTitle>
                       <CardDescription>
@@ -560,36 +684,13 @@ export default function WellnessInsightsPage() {
                         </div>
                       </div>
 
-                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                        {metrics.map((metric, index) => (
-                          <Card
-                            key={index}
-                            className="p-4 hover:shadow-md transition-shadow"
-                          >
-                            <div className="flex items-center gap-3 mb-2">
-                              <div className={`p-2 rounded-full ${metric.color}`}>
-                                {metric.icon}
-                              </div>
-                              <div>
-                                <p className="text-sm font-medium">
-                                  {metric.title}
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  {metric.description}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-end gap-2">
-                              <p className="text-2xl font-bold">
-                                {metric.value}
-                                <span className="text-base font-normal text-muted-foreground ml-1">
-                                  {metric.unit}
-                                </span>
-                              </p>
-                            </div>
-                          </Card>
-                        ))}
-                      </div>
+                      <Alert className="bg-blue-50 border-blue-200">
+                        <InfoIcon className="h-4 w-4 text-blue-500" />
+                        <AlertTitle className="text-blue-700">Vitals Data Available</AlertTitle>
+                        <AlertDescription className="text-blue-600">
+                          Your latest health metrics have been loaded from your BioWear device. Click the button below to get an AI assessment based on these metrics.
+                        </AlertDescription>
+                      </Alert>
 
                       <div className="flex items-center gap-4 pt-2">
                         <Button
@@ -604,20 +705,11 @@ export default function WellnessInsightsPage() {
                               Processing vitals...
                             </>
                           ) : hasVitalsData ? (
-                            "Re-assess from Vitals"
+                            "Get Assessment from Vitals"
                           ) : (
                             "Get Assessment from Vitals"
                           )}
                         </Button>
-                        {hasVitalsData && (
-                          <Button
-                            variant="ghost"
-                            onClick={() => setHasVitalsData(false)}
-                            disabled={vitalsLoading}
-                          >
-                            Clear Vitals
-                          </Button>
-                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -626,7 +718,8 @@ export default function WellnessInsightsPage() {
                   <form onSubmit={handleSubmit}>
                     <Card className="shadow-sm">
                       <CardHeader>
-                        <CardTitle className="text-xl">
+                        <CardTitle className="text-xl flex items-center gap-2">
+                          <Stethoscope className="h-5 w-5 text-primary" />
                           Manual Assessment from Symptoms
                         </CardTitle>
                         <CardDescription>
@@ -966,68 +1059,133 @@ export default function WellnessInsightsPage() {
                 </TabsContent>
 
                 <TabsContent value="history">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>
-                        Assessment History
-                      </CardTitle>
-                      <CardDescription>
-                        Your recent health assessments
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      {history.length > 0 ? (
-                        <div className="space-y-4">
-                          {history.map((item, index) => (
-                            <Card
-                              key={index}
-                              className="transition-colors cursor-pointer hover:bg-muted/30"
-                              onClick={() => {
-                                setDiseaseInfo(item);
-                                setActiveTab("prediction");
-                              }}
-                            >
-                              <CardHeader className="py-3">
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center gap-3">
-                                    <div
-                                      className={`h-2 w-2 rounded-full ${severityColor(
-                                        item.severity
-                                      )}`}
-                                    />
-                                    <CardTitle className="text-sm font-medium">
-                                      {item.timestamp
-                                        ? formatDate(item.timestamp)
-                                        : "Unknown date"}
-                                    </CardTitle>
-                                    {item.predictedFrom === "vitals" && (
-                                      <Badge variant="secondary">Vitals</Badge>
-                                    )}
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>
+                          Assessment History
+                        </CardTitle>
+                        <CardDescription>
+                          Your recent health assessments
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        {history.length > 0 ? (
+                          <div className="space-y-4">
+                            {history.map((item, index) => (
+                              <Card
+                                key={index}
+                                className="transition-colors cursor-pointer hover:bg-muted/30"
+                                onClick={() => {
+                                  setDiseaseInfo(item);
+                                  setActiveTab("prediction");
+                                }}
+                              >
+                                <CardHeader className="py-3">
+                                  <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-3">
+                                      <div
+                                        className={`h-2 w-2 rounded-full ${severityColor(
+                                          item.severity
+                                        )}`}
+                                      />
+                                      <CardTitle className="text-sm font-medium">
+                                        {item.timestamp
+                                          ? formatDate(item.timestamp)
+                                          : "Unknown date"}
+                                      </CardTitle>
+                                      {item.predictedFrom === "vitals" && (
+                                        <Badge variant="secondary">Vitals</Badge>
+                                      )}
+                                    </div>
+                                    <Badge variant="outline">
+                                      {Math.round((item.confidence || 0) * 100)}%
+                                    </Badge>
                                   </div>
-                                  <Badge variant="outline">
-                                    {Math.round((item.confidence || 0) * 100)}%
-                                  </Badge>
-                                </div>
-                              </CardHeader>
-                              <CardContent className="pt-0">
-                                <p className="text-sm line-clamp-2 text-muted-foreground">
-                                  {item.overview || "No overview available"}
-                                </p>
-                              </CardContent>
-                            </Card>
-                          ))}
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center py-12">
-                          <InfoIcon className="h-8 w-8 text-muted-foreground mb-4" />
-                          <p className="text-sm text-muted-foreground">
-                            No assessment history yet. Complete your first
-                            assessment to see it here.
-                          </p>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
+                                </CardHeader>
+                                <CardContent className="pt-0">
+                                  <p className="text-sm line-clamp-2 text-muted-foreground">
+                                    {item.overview || "No overview available"}
+                                  </p>
+                                </CardContent>
+                              </Card>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center py-12">
+                            <InfoIcon className="h-8 w-8 text-muted-foreground mb-4" />
+                            <p className="text-sm text-muted-foreground">
+                              No assessment history yet. Complete your first
+                              assessment to see it here.
+                            </p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>
+                          Vitals History
+                        </CardTitle>
+                        <CardDescription>
+                          Your recent health metrics
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        {vitalsHistory.length > 0 ? (
+                          <div className="space-y-4">
+                            {vitalsHistory.map((item, index) => (
+                              <Card key={index} className="hover:bg-muted/30 transition-colors">
+                                <CardHeader className="py-3">
+                                  <div className="flex items-center justify-between">
+                                    <CardTitle className="text-sm font-medium">
+                                      {formatDate(item.timestamp)}
+                                    </CardTitle>
+                                  </div>
+                                </CardHeader>
+                                <CardContent className="pt-0">
+                                  <div className="grid grid-cols-2 gap-2 text-sm">
+                                    <div className="flex items-center gap-1">
+                                      <HeartPulse className="h-3 w-3 text-red-500" />
+                                      <span className="text-muted-foreground">HR:</span>
+                                      <span>{item.heart_rate || '--'} BPM</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      <Droplets className="h-3 w-3 text-blue-500" />
+                                      <span className="text-muted-foreground">SpO2:</span>
+                                      <span>{item.spo2 || '--'}%</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      <Thermometer className="h-3 w-3 text-orange-500" />
+                                      <span className="text-muted-foreground">Temp:</span>
+                                      <span>{item.temperature || '--'}°C</span>
+                                    </div>
+                                    <div className="flex items-center gap-1">
+                                      <Gauge className="h-3 w-3 text-green-500" />
+                                      <span className="text-muted-foreground">BP:</span>
+                                      <span>
+                                        {item.systolic_bp && item.diastolic_bp 
+                                          ? `${item.systolic_bp}/${item.diastolic_bp}` 
+                                          : '--'}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center py-12">
+                            <InfoIcon className="h-8 w-8 text-muted-foreground mb-4" />
+                            <p className="text-sm text-muted-foreground">
+                              No vitals history available.
+                            </p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
                 </TabsContent>
 
                 <TabsContent value="resources">
