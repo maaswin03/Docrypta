@@ -140,14 +140,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     {
       title: "Dashboard",
       url: "/doctor/dashboard",
-      icon: Activity,
-      isActive: true,
-      items: [
-        {
-          title: "Overview",
-          url: "/doctor/dashboard",
-        },
-      ],
+      icon: Activity
     },
     {
       title: "Appointments",
