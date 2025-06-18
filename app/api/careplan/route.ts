@@ -169,7 +169,7 @@ export async function POST(request: Request) {
           
           ${vitals.heart_rate && vitals.heart_rate > 90 ? '- Practice deep breathing exercises before bed to help lower heart rate\n- Consider a warm bath 1-2 hours before bedtime\n' : ''}
           ${symptoms && symptoms.toLowerCase().includes('stress') ? '- Add 10 minutes of meditation to your bedtime routine\n- Try progressive muscle relaxation techniques\n' : ''}
-          ${symptoms && symptoms.toLowerCase().includes('insomnia') ? '- Limit time in bed when not sleeping\n- If you can't fall asleep within 20 minutes, get up and do something relaxing until you feel sleepy\n' : ''}
+          ${symptoms && symptoms.toLowerCase().includes('insomnia') ? '- Limit time in bed when not sleeping\n- If you can\'t fall asleep within 20 minutes, get up and do something relaxing until you feel sleepy\n' : ''}
           
           If sleep problems persist, consider consulting with a healthcare provider or sleep specialist for personalized advice.
         `
@@ -230,5 +230,8 @@ export async function POST(request: Request) {
       { error: 'Failed to process your request' },
       { status: 500 }
     )
+  }
+}
+    }
   }
 }

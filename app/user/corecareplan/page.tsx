@@ -22,20 +22,7 @@ import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Textarea } from "@/components/ui/textarea"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { 
-  Activity, 
-  Utensils, 
-  Moon, 
-  Dumbbell, 
-  Droplet,
-  RefreshCw,
-  AlertCircle,
-  HeartPulse,
-  Thermometer,
-  Gauge,
-  Lungs,
-  Droplets
-} from "lucide-react"
+import { Activity, Utensils, Moon, Dumbbell, Droplet, RefreshCw, AlertCircle, HeartPulse, Thermometer, Gauge, Settings as Lungs, Droplets } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { supabase } from "@/lib/supabaseClient"
 import { useToast } from "@/hooks/use-toast"
