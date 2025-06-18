@@ -1,6 +1,8 @@
-import { AppSidebar } from "@/components/sidebar/app-sidebar";
-import axios from "axios";
-import * as React from "react";
+"use client"
+
+import { useState, useEffect } from "react"
+import { ProtectedRoute } from "@/components/auth/protected-route"
+import { AppSidebar } from "@/components/sidebar/app-sidebar"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -8,705 +10,524 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { Separator } from "@/components/ui/separator";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+} from "@/components/ui/breadcrumb"
+import { Separator } from "@/components/ui/separator"
 import {
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
-} from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+} from "@/components/ui/sidebar"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Textarea } from "@/components/ui/textarea"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { 
+  Activity, 
+  Utensils, 
+  Moon, 
+  Dumbbell, 
+  Droplet,
+  RefreshCw,
+  AlertCircle,
+  HeartPulse,
+  Thermometer,
+  Gauge,
+  Lungs,
+  Droplets
+} from "lucide-react"
+import { useAuth } from "@/lib/auth-context"
+import { supabase } from "@/lib/supabaseClient"
+import { useToast } from "@/hooks/use-toast"
 
-interface FormattedResponseProps {
-  text: string;
-  className?: string;
+interface VitalsData {
+  heart_rate?: number
+  spo2?: number
+  temperature?: number
+  respiratory_rate?: number
+  systolic_bp?: number
+  diastolic_bp?: number
+  glucose_level?: number
 }
 
-export const FormattedResponse: React.FC<FormattedResponseProps> = ({
-  text,
-  className = "",
-}) => {
-  if (!text) return null;
+export default function CoreCarePlanPage() {
+  const { user } = useAuth()
+  const { toast } = useToast()
+  const [vitals, setVitals] = useState<VitalsData | null>(null)
+  const [symptoms, setSymptoms] = useState("")
+  const [dietPlan, setDietPlan] = useState<string>("")
+  const [exercisePlan, setExercisePlan] = useState<string>("")
+  const [sleepPlan, setSleepPlan] = useState<string>("")
+  const [activeTab, setActiveTab] = useState("diet")
+  const [isLoadingVitals, setIsLoadingVitals] = useState(true)
+  const [isGeneratingPlan, setIsGeneratingPlan] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const renderContent = () => {
-    return text.split("\n").map((line, i) => {
-      if (!line.trim()) return null;
+  useEffect(() => {
+    fetchLatestVitals()
+  }, [user?.id])
 
-      if (line.startsWith("## ")) {
-        return (
-          <h3 key={i} className="text-lg font-semibold mt-4 mb-2 text-primary">
-            {line.substring(3)}
-          </h3>
-        );
-      }
+  const fetchLatestVitals = async () => {
+    if (!user?.id) return
 
-      if (line.startsWith("### ")) {
-        return (
-          <h4 key={i} className="text-md font-medium mt-3 mb-1">
-            {line.substring(4)}
-          </h4>
-        );
-      }
-
-      if (line.startsWith("- ")) {
-        return (
-          <ul key={i} className="list-disc pl-5 my-1">
-            <li>{line.substring(2)}</li>
-          </ul>
-        );
-      }
-
-      if (/^\d+\./.test(line)) {
-        return (
-          <ol key={i} className="list-decimal pl-5 my-1">
-            <li>{line.substring(line.indexOf(" ") + 1)}</li>
-          </ol>
-        );
-      }
-
-      if (line.includes("**")) {
-        const parts = line.split("**");
-        return (
-          <p key={i} className="my-1">
-            {parts.map((part, j) =>
-              j % 2 === 1 ? (
-                <span key={j} className="font-semibold">
-                  {part}
-                </span>
-              ) : (
-                part
-              )
-            )}
-          </p>
-        );
-      }
-
-      if (/: \d+/.test(line)) {
-        const [label, value] = line.split(": ");
-        return (
-          <p key={i} className="my-1">
-            <span className="font-medium">{label}:</span> {value}
-          </p>
-        );
-      }
-
-      return (
-        <p key={i} className="my-2">
-          {line}
-        </p>
-      );
-    });
-  };
-
-  return <div className={`text-sm ${className}`}>{renderContent()}</div>;
-};
-
-interface SensorData {
-  [key: string]: any;
-}
-
-interface ResponseData {
-  text: string;
-}
-
-export default function Personalizedplans() {
-  const [suggestions, setSuggestions] = React.useState({
-    spo2: "",
-    temperature: "",
-    heartRate: "",
-    diet: "",
-    exercise: "",
-    sleep: "",
-  });
-  const [bloodPressureData, setBloodPressureData] = React.useState<SensorData>(
-    {}
-  );
-  const [temperatureData, setTemperatureData] = React.useState<SensorData>({});
-  const [heartrateData, setheartrateData] = React.useState<SensorData>({});
-  const [pulserateData, setpulserateData] = React.useState<SensorData>({});
-  const [rpData, setrpData] = React.useState<SensorData>({});
-  const [spo2Data, setspo2Data] = React.useState<SensorData>({});
-
-  const [loading, setLoading] = React.useState({
-    general: false,
-    diet: false,
-    exercise: false,
-    sleep: false,
-  });
-
-  const username = "maaswin";
-
-  const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    setLoading((prev) => ({ ...prev, general: true }));
     try {
-      setLoading((prev) => ({ ...prev, general: true }));
+      setIsLoadingVitals(true)
+      setError(null)
 
-      const tempRes = await axios.post<ResponseData>(
-        "http://localhost:8000/api/temperature_suggestions",
-        { username }
-      );
-      setSuggestions((prev) => ({
-        ...prev,
-        temperature: tempRes.data.text.replace(/\*/g, ""),
-      }));
+      const { data, error } = await supabase
+        .from('vitals_data')
+        .select('heart_rate, spo2, temperature, respiratory_rate, systolic_bp, diastolic_bp, glucose_level')
+        .eq('user_id', user.id)
+        .order('timestamp', { ascending: false })
+        .limit(1)
+        .single()
 
-      const spo2Res = await axios.post<ResponseData>(
-        "http://localhost:8000/api/spo2_suggestions",
-        {
-          username,
-        }
-      );
-      setSuggestions((prev) => ({
-        ...prev,
-        spo2: spo2Res.data.text.replace(/\*/g, ""),
-      }));
-
-      const heartRateRes = await axios.post<ResponseData>(
-        "http://localhost:8000/api/pulseandheartrate_suggestions",
-        { username }
-      );
-      setSuggestions((prev) => ({
-        ...prev,
-        heartRate: heartRateRes.data.text.replace(/\*/g, ""),
-      }));
-    } catch (error) {
-      console.error("Error fetching suggestions:", error);
-    } finally {
-      setLoading((prev) => ({ ...prev, general: false }));
-    }
-  };
-
-  const generateDietPlan = async () => {
-    setLoading((prev) => ({ ...prev, diet: true }));
-    try {
-      const res = await axios.post<ResponseData>(
-        "http://localhost:8000/generate_diet_plan",
-        {
-          username,
-          healthData: {
-            spo2: bloodPressureData.currentsp02,
-            temperature: temperatureData.currenttemperature,
-            heartRate: heartrateData.currentheartRate,
-            pulseRate: pulserateData.currentpulseRate,
-          },
-        }
-      );
-      setSuggestions((prev) => ({
-        ...prev,
-        diet: res.data.text.replace(/\*/g, ""),
-      }));
-    } catch (error) {
-      console.error("Error generating diet plan:", error);
-    } finally {
-      setLoading((prev) => ({ ...prev, diet: false }));
-    }
-  };
-
-  const generateExercisePlan = async () => {
-    setLoading((prev) => ({ ...prev, exercise: true }));
-    try {
-      const res = await axios.post<ResponseData>(
-        "http://localhost:8000/generate_exercise_plan",
-        {
-          username,
-          healthData: {
-            spo2: bloodPressureData.currentsp02,
-            temperature: temperatureData.currenttemperature,
-            heartRate: heartrateData.currentheartRate,
-            pulseRate: pulserateData.currentpulseRate,
-          },
-        }
-      );
-      setSuggestions((prev) => ({
-        ...prev,
-        exercise: res.data.text.replace(/\*/g, ""),
-      }));
-    } catch (error) {
-      console.error("Error generating exercise plan:", error);
-    } finally {
-      setLoading((prev) => ({ ...prev, exercise: false }));
-    }
-  };
-
-  const generateSleepPlan = async () => {
-    setLoading((prev) => ({ ...prev, sleep: true }));
-    try {
-      const res = await axios.post<ResponseData>(
-        "http://localhost:8000/generate_sleep_plan",
-        {
-          username,
-          healthData: {
-            spo2: bloodPressureData.currentsp02,
-            temperature: temperatureData.currenttemperature,
-            heartRate: heartrateData.currentheartRate,
-            pulseRate: pulserateData.currentpulseRate,
-          },
-        }
-      );
-      setSuggestions((prev) => ({
-        ...prev,
-        sleep: res.data.text.replace(/\*/g, ""),
-      }));
-    } catch (error) {
-      console.error("Error generating sleep plan:", error);
-    } finally {
-      setLoading((prev) => ({ ...prev, sleep: false }));
-    }
-  };
-
-  React.useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [tempRes, heartRes, pulseRes, respRes, spo2Res, bpRes] =
-          await Promise.all([
-            fetch("http://localhost:8000/api/get/temperature", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ username }),
-            }),
-            fetch("http://localhost:8000/api/get/heartrate", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ username }),
-            }),
-            fetch("http://localhost:8000/api/get/pulserate", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ username }),
-            }),
-            fetch("http://localhost:8000/api/get/respiratoryrate", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ username }),
-            }),
-            fetch("http://localhost:8000/api/get/spo2", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ username }),
-            }),
-            fetch("http://localhost:8000/api/get/bloodpressure", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ username }),
-            }),
-          ]);
-
-        if (!tempRes.ok || !bpRes.ok || !heartRes.ok) {
-          throw new Error("Network response was not ok");
-        }
-
-        const [tempData, bpData, heartData, pulseData, respData, spo2Data] =
-          await Promise.all([
-            tempRes.json(),
-            bpRes.json(),
-            heartRes.json(),
-            pulseRes.json(),
-            respRes.json(),
-            spo2Res.json(),
-          ]);
-
-        setTemperatureData(tempData[0]);
-        setBloodPressureData(bpData[0]);
-        setheartrateData(heartData[0]);
-        setpulserateData(pulseData[0]);
-        setrpData(respData[0]);
-        setspo2Data(spo2Data[0]);
-
-        console.log("Temperature Data:", tempData[0]);
-        console.log("Blood Pressure Data:", bpData[0]);
-        console.log("Heart Rate Data:", heartData[0]);
-        console.log("Pulse Rate Data:", pulseData[0]);
-        console.log("Respiratory Rate Data:", respData[0]);
-        console.log("SpO2 Data:", spo2Data[0]);
-      } catch (error) {
-        console.error("Error fetching data:", error);
+      if (error && error.code !== 'PGRST116') { // PGRST116 is "no rows returned"
+        throw new Error(error.message)
       }
-    };
 
-    fetchData();
-  }, [username]);
+      setVitals(data || null)
+    } catch (err) {
+      console.error('Error fetching vitals:', err)
+      setError('Failed to load your vital signs')
+      toast({
+        title: "Error",
+        description: "Failed to load your vital signs",
+        variant: "destructive"
+      })
+    } finally {
+      setIsLoadingVitals(false)
+    }
+  }
+
+  const generatePlan = async (planType: 'diet' | 'exercise' | 'sleep') => {
+    if (!vitals) {
+      toast({
+        title: "No Vitals Data",
+        description: "We need your vital signs to generate a personalized plan",
+        variant: "destructive"
+      })
+      return
+    }
+
+    try {
+      setIsGeneratingPlan(true)
+      setError(null)
+
+      // In a real app, this would call the OpenAI API
+      // For demo purposes, we'll call our simulated API endpoint
+      
+      const response = await fetch('/api/careplan', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          vitals,
+          symptoms,
+          planType
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`)
+      }
+
+      const data = await response.json()
+      
+      // Update the appropriate plan state
+      switch (planType) {
+        case 'diet':
+          setDietPlan(data.plan)
+          break
+        case 'exercise':
+          setExercisePlan(data.plan)
+          break
+        case 'sleep':
+          setSleepPlan(data.plan)
+          break
+      }
+      
+      // Switch to the tab for the generated plan
+      setActiveTab(planType)
+      
+      toast({
+        title: "Plan Generated",
+        description: `Your personalized ${planType} plan is ready!`,
+      })
+    } catch (err) {
+      console.error(`Error generating ${planType} plan:`, err)
+      setError(`Failed to generate ${planType} plan`)
+      toast({
+        title: "Error",
+        description: `Failed to generate your ${planType} plan`,
+        variant: "destructive"
+      })
+    } finally {
+      setIsGeneratingPlan(false)
+    }
+  }
+
+  // Format the AI plan with markdown-like formatting
+  const formatPlan = (text: string) => {
+    if (!text) return null
+    
+    return text.split('\n').map((line, index) => {
+      if (line.startsWith('## ')) {
+        return <h2 key={index} className="text-xl font-bold mt-4 mb-2">{line.substring(3)}</h2>
+      } else if (line.startsWith('### ')) {
+        return <h3 key={index} className="text-lg font-semibold mt-3 mb-1">{line.substring(4)}</h3>
+      } else if (line.startsWith('- ')) {
+        return <li key={index} className="ml-5 list-disc my-1">{line.substring(2)}</li>
+      } else if (line.startsWith('**')) {
+        const content = line.replace(/\*\*/g, '')
+        return <p key={index} className="font-semibold my-2">{content}</p>
+      } else if (line.trim() === '') {
+        return <br key={index} />
+      } else {
+        return <p key={index} className="my-2">{line}</p>
+      }
+    })
+  }
 
   return (
-    <SidebarProvider>
-      <AppSidebar />
-      <SidebarInset>
-        <header className="sticky top-0 z-10 flex h-16 items-center gap-2 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 border-b">
-            <SidebarTrigger className="-ml-1" />
-            <Separator orientation="vertical" className="mr-2 h-4" />
-            <Breadcrumb>
-              <BreadcrumbList>
-                <BreadcrumbItem className="hidden md:block">
-                  <BreadcrumbLink
-                    href="/corecareplan"
-                    className="hover:text-primary"
-                  >
-                    Ai & Asssistance
-                  </BreadcrumbLink>
-                </BreadcrumbItem>
-                <BreadcrumbSeparator className="hidden md:block" />
-                <BreadcrumbItem>
-                  <BreadcrumbPage className="font-semibold">
-                    Core Care Plans
-                  </BreadcrumbPage>
-                </BreadcrumbItem>
-              </BreadcrumbList>
-            </Breadcrumb>
-        </header>
-
-        <main className="flex-1 p-6">
-          {/* Current Readings Section */}
-          <section className="mb-8">
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold tracking-tight">
-                Current Readings
-              </h1>
-              <p className="text-muted-foreground text-sm">
-                Latest measurements from your health monitoring devices
-              </p>
+    <ProtectedRoute allowedRoles={['user']}>
+      <SidebarProvider>
+        <AppSidebar />
+        <SidebarInset className="flex flex-col h-screen overflow-hidden">
+          <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 border-b">
+            <div className="flex items-center gap-2 px-4">
+              <SidebarTrigger className="-ml-1" />
+              <Separator orientation="vertical" className="mr-2 h-4" />
+              <Breadcrumb>
+                <BreadcrumbList>
+                  <BreadcrumbItem className="hidden md:block">
+                    <BreadcrumbLink href="/user/dashboard">
+                      Dashboard
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                  <BreadcrumbSeparator className="hidden md:block" />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage>Core Care Plan</BreadcrumbPage>
+                  </BreadcrumbItem>
+                </BreadcrumbList>
+              </Breadcrumb>
             </div>
-
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-              <Card className="h-full rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <CardDescription className="font-medium text-sm">
-                    SpO2
-                  </CardDescription>
-                  <CardTitle className="text-2xl">
-                    {spo2Data.currSpO2 || "--"}{" "}
-                    <span className="text-base">%</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardFooter>
-                  <p className="text-xs text-muted-foreground">
-                    Updated 5 min ago
-                  </p>
-                </CardFooter>
-              </Card>
-
-              <Card className="h-full rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <CardDescription className="font-medium text-sm">
-                    Temperature
-                  </CardDescription>
-                  <CardTitle className="text-2xl">
-                    {temperatureData.currTemperature || "--"}{" "}
-                    <span className="text-base">°F</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardFooter>
-                  <p className="text-xs text-muted-foreground">
-                    Updated 5 min ago
-                  </p>
-                </CardFooter>
-              </Card>
-
-              <Card className="h-full rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <CardDescription className="font-medium text-sm">
-                    Heart Rate
-                  </CardDescription>
-                  <CardTitle className="text-2xl">
-                    {heartrateData.currHeartRate || "--"}{" "}
-                    <span className="text-base">bpm</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardFooter>
-                  <p className="text-xs text-muted-foreground">
-                    Updated 5 min ago
-                  </p>
-                </CardFooter>
-              </Card>
-
-              <Card className="h-full rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <CardDescription className="font-medium text-sm">
-                    Pulse Rate
-                  </CardDescription>
-                  <CardTitle className="text-2xl">
-                    {pulserateData.currPulseRate || "--"}{" "}
-                    <span className="text-base">bpm</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardFooter>
-                  <p className="text-xs text-muted-foreground">
-                    Updated 5 min ago
-                  </p>
-                </CardFooter>
-              </Card>
-
-              <Card className="h-full rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <CardDescription className="font-medium text-sm">
-                    Respiratory Rate
-                  </CardDescription>
-                  <CardTitle className="text-2xl">
-                    {rpData.currRespiratoryRate || "--"}{" "}
-                    <span className="text-base">rpm</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardFooter>
-                  <p className="text-xs text-muted-foreground">
-                    Updated 5 min ago
-                  </p>
-                </CardFooter>
-              </Card>
-
-              <Card className="h-full rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                <CardHeader>
-                  <CardDescription className="font-medium text-sm">
-                    Blood Pressure
-                  </CardDescription>
-                  <CardTitle className="text-2xl">
-                    {bloodPressureData.currSystolic &&
-                    bloodPressureData.currDiastolic
-                      ? `${bloodPressureData.currSystolic}/${bloodPressureData.currDiastolic}`
-                      : "--"}
-                    <span className="text-base">mmHg</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardFooter>
-                  <p className="text-xs text-muted-foreground">
-                    Updated 5 min ago
-                  </p>
-                </CardFooter>
-              </Card>
-            </div>
-          </section>
-
-          <section className="mb-8">
-            <div className="mb-6 flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold tracking-tight">
-                  Health Metrics Recommendations
-                </h1>
-                <p className="text-muted-foreground text-sm">
-                  Customized recommendations based on your health metrics
-                </p>
+          </header>
+          
+          <div className="flex-1 overflow-y-auto min-h-0">
+            <div className="p-6 max-w-4xl mx-auto space-y-6">
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-2xl font-bold">Core Care Plan</h1>
+                  <p className="text-muted-foreground">AI-generated personalized health plans</p>
+                </div>
+                <Button variant="outline" onClick={fetchLatestVitals} disabled={isLoadingVitals}>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Refresh Vitals
+                </Button>
               </div>
-              <Button onClick={handleSubmit} disabled={loading.general}>
-                {loading.general ? "Generating..." : "Generate Suggestions"}
-              </Button>
-            </div>
 
-            <div className="space-y-4">
-              <Card>
+              {error && (
+                <Card className="border-red-200 bg-red-50">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2 text-red-600">
+                      <AlertCircle className="h-5 w-5" />
+                      <p>{error}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Latest Vitals */}
+              <Card className="shadow-lg">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-blue-500" />
-                    Temperature Recommendations
+                    <Activity className="h-5 w-5" />
+                    Your Latest Vitals
                   </CardTitle>
                   <CardDescription>
-                    Current reading: {temperatureData.currTemperature || "--"}°F
+                    Health measurements used to personalize your care plans
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {suggestions.temperature ? (
-                    <FormattedResponse
-                      text={suggestions.temperature}
-                      className="text-muted-foreground"
-                    />
+                  {isLoadingVitals ? (
+                    <div className="grid gap-4 grid-cols-2 md:grid-cols-3">
+                      {[1, 2, 3, 4, 5, 6].map((i) => (
+                        <div key={i} className="space-y-2">
+                          <Skeleton className="h-4 w-24" />
+                          <Skeleton className="h-8 w-16" />
+                        </div>
+                      ))}
+                    </div>
+                  ) : vitals ? (
+                    <div className="grid gap-6 grid-cols-2 md:grid-cols-3">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <HeartPulse className="h-4 w-4 text-red-500" />
+                          <span>Heart Rate</span>
+                        </div>
+                        <p className="text-2xl font-semibold">
+                          {vitals.heart_rate || 'N/A'} 
+                          {vitals.heart_rate && <span className="text-sm font-normal ml-1">BPM</span>}
+                        </p>
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Droplets className="h-4 w-4 text-blue-500" />
+                          <span>SpO2</span>
+                        </div>
+                        <p className="text-2xl font-semibold">
+                          {vitals.spo2 || 'N/A'} 
+                          {vitals.spo2 && <span className="text-sm font-normal ml-1">%</span>}
+                        </p>
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Thermometer className="h-4 w-4 text-orange-500" />
+                          <span>Temperature</span>
+                        </div>
+                        <p className="text-2xl font-semibold">
+                          {vitals.temperature || 'N/A'} 
+                          {vitals.temperature && <span className="text-sm font-normal ml-1">°C</span>}
+                        </p>
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Gauge className="h-4 w-4 text-purple-500" />
+                          <span>Blood Pressure</span>
+                        </div>
+                        <p className="text-2xl font-semibold">
+                          {vitals.systolic_bp && vitals.diastolic_bp 
+                            ? `${vitals.systolic_bp}/${vitals.diastolic_bp}` 
+                            : 'N/A'} 
+                          {vitals.systolic_bp && <span className="text-sm font-normal ml-1">mmHg</span>}
+                        </p>
+                      </div>
+                      
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                          <Lungs className="h-4 w-4 text-green-500" />
+                          <span>Respiratory Rate</span>
+                        </div>
+                        <p className="text-2xl font-semibold">
+                          {vitals.respiratory_rate || 'N/A'} 
+                          {vitals.respiratory_rate && <span className="text-sm font-normal ml-1">/min</span>}
+                        </p>
+                      </div>
+                    </div>
                   ) : (
-                    <div className="space-y-2">
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-[90%]" />
-                      <Skeleton className="h-4 w-[80%]" />
+                    <div className="text-center py-6">
+                      <p className="text-muted-foreground">No vitals data available</p>
+                      <Button variant="outline" className="mt-2" onClick={fetchLatestVitals}>
+                        Check Again
+                      </Button>
                     </div>
                   )}
                 </CardContent>
               </Card>
 
-              <Card>
+              {/* Symptoms Input */}
+              <Card className="shadow-lg">
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-green-500" />
-                    SpO2 Recommendations
-                  </CardTitle>
+                  <CardTitle>Any Symptoms?</CardTitle>
                   <CardDescription>
-                    Current reading: {spo2Data.currSpO2 || "--"}%
+                    Describe any symptoms you're experiencing to help personalize your care plans
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {suggestions.spo2 ? (
-                    <FormattedResponse
-                      text={suggestions.spo2}
-                      className="text-muted-foreground"
-                    />
-                  ) : (
-                    <div className="space-y-2">
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-[90%]" />
-                      <Skeleton className="h-4 w-[80%]" />
-                    </div>
-                  )}
+                  <Textarea
+                    placeholder="E.g., headache, fatigue, joint pain, etc. (optional)"
+                    value={symptoms}
+                    onChange={(e) => setSymptoms(e.target.value)}
+                    className="min-h-[100px]"
+                  />
                 </CardContent>
               </Card>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <div className="h-2 w-2 rounded-full bg-purple-500" />
-                    Heart & Pulse Rate Recommendations
-                  </CardTitle>
-                  <CardDescription>
-                    Current readings: {heartrateData.currHeartRate || "--"} BPM
-                    & {pulserateData.currPulseRate || "--"} BPM
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {suggestions.heartRate ? (
-                    <FormattedResponse
-                      text={suggestions.heartRate}
-                      className="text-muted-foreground"
-                    />
-                  ) : (
-                    <div className="space-y-2">
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-[90%]" />
-                      <Skeleton className="h-4 w-[80%]" />
-                    </div>
-                  )}
+              {/* Care Plans */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl font-bold">Your Personalized Care Plans</h2>
+                  <div className="flex gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => generatePlan('diet')}
+                      disabled={isGeneratingPlan || !vitals}
+                    >
+                      <Utensils className="h-4 w-4 mr-2" />
+                      Diet Plan
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => generatePlan('exercise')}
+                      disabled={isGeneratingPlan || !vitals}
+                    >
+                      <Dumbbell className="h-4 w-4 mr-2" />
+                      Exercise Plan
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => generatePlan('sleep')}
+                      disabled={isGeneratingPlan || !vitals}
+                    >
+                      <Moon className="h-4 w-4 mr-2" />
+                      Sleep Plan
+                    </Button>
+                  </div>
+                </div>
+
+                <Tabs value={activeTab} onValueChange={setActiveTab}>
+                  <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="diet" className="flex items-center gap-2">
+                      <Utensils className="h-4 w-4" />
+                      <span className="hidden sm:inline">Diet</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="exercise" className="flex items-center gap-2">
+                      <Dumbbell className="h-4 w-4" />
+                      <span className="hidden sm:inline">Exercise</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="sleep" className="flex items-center gap-2">
+                      <Moon className="h-4 w-4" />
+                      <span className="hidden sm:inline">Sleep</span>
+                    </TabsTrigger>
+                  </TabsList>
+                  
+                  <Card className="mt-4 shadow-lg">
+                    <TabsContent value="diet" className="m-0">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Utensils className="h-5 w-5" />
+                          Personalized Diet Plan
+                        </CardTitle>
+                        <CardDescription>
+                          Nutrition recommendations based on your health data
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        {isGeneratingPlan && activeTab === 'diet' ? (
+                          <div className="space-y-4">
+                            <div className="flex items-center gap-2">
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                              <p>Generating your personalized diet plan...</p>
+                            </div>
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-[90%]" />
+                            <Skeleton className="h-4 w-[80%]" />
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-[85%]" />
+                          </div>
+                        ) : dietPlan ? (
+                          <div className="prose prose-sm max-w-none">
+                            {formatPlan(dietPlan)}
+                          </div>
+                        ) : (
+                          <div className="text-center py-6">
+                            <p className="text-muted-foreground">
+                              Click the "Diet Plan" button above to generate your personalized nutrition recommendations
+                            </p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </TabsContent>
+                    
+                    <TabsContent value="exercise" className="m-0">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Dumbbell className="h-5 w-5" />
+                          Personalized Exercise Plan
+                        </CardTitle>
+                        <CardDescription>
+                          Physical activity recommendations based on your health data
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        {isGeneratingPlan && activeTab === 'exercise' ? (
+                          <div className="space-y-4">
+                            <div className="flex items-center gap-2">
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                              <p>Generating your personalized exercise plan...</p>
+                            </div>
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-[90%]" />
+                            <Skeleton className="h-4 w-[80%]" />
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-[85%]" />
+                          </div>
+                        ) : exercisePlan ? (
+                          <div className="prose prose-sm max-w-none">
+                            {formatPlan(exercisePlan)}
+                          </div>
+                        ) : (
+                          <div className="text-center py-6">
+                            <p className="text-muted-foreground">
+                              Click the "Exercise Plan" button above to generate your personalized activity recommendations
+                            </p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </TabsContent>
+                    
+                    <TabsContent value="sleep" className="m-0">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Moon className="h-5 w-5" />
+                          Personalized Sleep Plan
+                        </CardTitle>
+                        <CardDescription>
+                          Rest and recovery recommendations based on your health data
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        {isGeneratingPlan && activeTab === 'sleep' ? (
+                          <div className="space-y-4">
+                            <div className="flex items-center gap-2">
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                              <p>Generating your personalized sleep plan...</p>
+                            </div>
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-[90%]" />
+                            <Skeleton className="h-4 w-[80%]" />
+                            <Skeleton className="h-4 w-full" />
+                            <Skeleton className="h-4 w-[85%]" />
+                          </div>
+                        ) : sleepPlan ? (
+                          <div className="prose prose-sm max-w-none">
+                            {formatPlan(sleepPlan)}
+                          </div>
+                        ) : (
+                          <div className="text-center py-6">
+                            <p className="text-muted-foreground">
+                              Click the "Sleep Plan" button above to generate your personalized rest recommendations
+                            </p>
+                          </div>
+                        )}
+                      </CardContent>
+                    </TabsContent>
+                  </Card>
+                </Tabs>
+              </div>
+
+              {/* Disclaimer */}
+              <Card className="bg-muted/50 shadow-sm">
+                <CardContent className="p-4">
+                  <p className="text-sm text-muted-foreground">
+                    <strong>Disclaimer:</strong> These AI-generated care plans are for informational purposes only and do not constitute medical advice. 
+                    Always consult with a qualified healthcare provider before making significant changes to your diet, exercise routine, or sleep habits.
+                  </p>
                 </CardContent>
               </Card>
             </div>
-          </section>
-
-          <section>
-            <div className="mb-6">
-              <h1 className="text-2xl font-bold tracking-tight">
-                Lifestyle Plans
-              </h1>
-              <p className="text-muted-foreground text-sm">
-                Personalized plans tailored to your health metrics and goals
-              </p>
-            </div>
-
-            <div className="space-y-4">
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
-                      <div className="h-2 w-2 rounded-full bg-orange-500" />
-                      Personalized Diet Plan
-                    </CardTitle>
-                    <Button
-                      onClick={generateDietPlan}
-                      disabled={loading.diet}
-                      size="sm"
-                      variant="outline"
-                    >
-                      {loading.diet ? "Generating..." : "Generate Plan"}
-                    </Button>
-                  </div>
-                  <CardDescription>
-                    Nutrition recommendations based on your health metrics
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {suggestions.diet ? (
-                    <FormattedResponse
-                      text={suggestions.diet}
-                      className="text-muted-foreground"
-                    />
-                  ) : (
-                    <div className="space-y-2">
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-[90%]" />
-                      <Skeleton className="h-4 w-[80%]" />
-                      <Skeleton className="h-4 w-[70%]" />
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Exercise Plan Card */}
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
-                      <div className="h-2 w-2 rounded-full bg-red-500" />
-                      Personalized Exercise Plan
-                    </CardTitle>
-                    <Button
-                      onClick={generateExercisePlan}
-                      disabled={loading.exercise}
-                      size="sm"
-                      variant="outline"
-                    >
-                      {loading.exercise ? "Generating..." : "Generate Plan"}
-                    </Button>
-                  </div>
-                  <CardDescription>
-                    Workout routines tailored to your fitness level and health
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {suggestions.exercise ? (
-                    <FormattedResponse
-                      text={suggestions.exercise}
-                      className="text-muted-foreground"
-                    />
-                  ) : (
-                    <div className="space-y-2">
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-[90%]" />
-                      <Skeleton className="h-4 w-[80%]" />
-                      <Skeleton className="h-4 w-[70%]" />
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-
-              {/* Sleep Plan Card */}
-              <Card>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
-                      <div className="h-2 w-2 rounded-full bg-indigo-500" />
-                      Personalized Sleep Plan
-                    </CardTitle>
-                    <Button
-                      onClick={generateSleepPlan}
-                      disabled={loading.sleep}
-                      size="sm"
-                      variant="outline"
-                    >
-                      {loading.sleep ? "Generating..." : "Generate Plan"}
-                    </Button>
-                  </div>
-                  <CardDescription>
-                    Sleep recommendations to optimize your rest and recovery
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  {suggestions.sleep ? (
-                    <FormattedResponse
-                      text={suggestions.sleep}
-                      className="text-muted-foreground"
-                    />
-                  ) : (
-                    <div className="space-y-2">
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-[90%]" />
-                      <Skeleton className="h-4 w-[80%]" />
-                      <Skeleton className="h-4 w-[70%]" />
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </section>
-        </main>
-      </SidebarInset>
-    </SidebarProvider>
-  );
+          </div>
+        </SidebarInset>
+      </SidebarProvider>
+    </ProtectedRoute>
+  )
 }
