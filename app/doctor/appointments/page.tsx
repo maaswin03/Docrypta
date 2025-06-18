@@ -30,7 +30,8 @@ import {
   Stethoscope,
   X,
   Filter,
-  Search
+  Search,
+  MoreHorizontal
 } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { supabase } from "@/lib/supabaseClient"
@@ -52,6 +53,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 
 interface Appointment {
   id: string
@@ -341,64 +348,52 @@ export default function DoctorAppointments() {
                               </Badge>
                             </TableCell>
                             <TableCell className="text-right">
-                              <div className="flex justify-end gap-2">
-                                {appointment.status === 'pending' && (
-                                  <>
-                                    <Button
-                                      onClick={() => updateAppointmentStatus(appointment.id, 'accepted')}
-                                      disabled={updatingId === appointment.id}
-                                      size="sm"
-                                      variant="default"
-                                    >
-                                      <Check className="h-4 w-4 mr-1" />
-                                      Accept
-                                    </Button>
-                                    <Button
-                                      onClick={() => updateAppointmentStatus(appointment.id, 'rejected')}
-                                      disabled={updatingId === appointment.id}
-                                      size="sm"
-                                      variant="destructive"
-                                    >
-                                      <X className="h-4 w-4 mr-1" />
-                                      Reject
-                                    </Button>
-                                  </>
-                                )}
-                                
-                                {appointment.status === 'accepted' && (
-                                  <>
-                                    <Button size="sm" asChild>
-                                      <Link href="/doctor/meet">
-                                        <Video className="h-4 w-4 mr-1" />
-                                        Join
-                                      </Link>
-                                    </Button>
-                                    <Button 
-                                      variant="outline" 
-                                      size="sm"
-                                      asChild
-                                    >
-                                      <Link href={`/doctor/patient-vitals/${appointment.patient_id}`}>
-                                        <Stethoscope className="h-4 w-4 mr-1" />
-                                        Vitals
-                                      </Link>
-                                    </Button>
-                                  </>
-                                )}
-                                
-                                {appointment.status === 'completed' && (
-                                  <Button 
-                                    variant="outline" 
-                                    size="sm"
-                                    asChild
-                                  >
-                                    <Link href={`/doctor/patient-vitals/${appointment.patient_id}`}>
-                                      <Stethoscope className="h-4 w-4 mr-1" />
-                                      Vitals
-                                    </Link>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                                    <MoreHorizontal className="h-4 w-4" />
                                   </Button>
-                                )}
-                              </div>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  {appointment.status === 'pending' && (
+                                    <>
+                                      <DropdownMenuItem 
+                                        onClick={() => updateAppointmentStatus(appointment.id, 'accepted')}
+                                        disabled={updatingId === appointment.id}
+                                      >
+                                        <Check className="h-4 w-4 mr-2 text-green-600" />
+                                        Accept
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem 
+                                        onClick={() => updateAppointmentStatus(appointment.id, 'rejected')}
+                                        disabled={updatingId === appointment.id}
+                                        className="text-red-600"
+                                      >
+                                        <X className="h-4 w-4 mr-2" />
+                                        Reject
+                                      </DropdownMenuItem>
+                                    </>
+                                  )}
+                                  
+                                  {appointment.status === 'accepted' && (
+                                    <DropdownMenuItem asChild>
+                                      <Link href="/doctor/meet">
+                                        <Video className="h-4 w-4 mr-2 text-blue-600" />
+                                        Join Meeting
+                                      </Link>
+                                    </DropdownMenuItem>
+                                  )}
+                                  
+                                  {(appointment.status === 'accepted' || appointment.status === 'completed') && (
+                                    <DropdownMenuItem asChild>
+                                      <Link href={`/doctor/patient-vitals/${appointment.patient_id}`}>
+                                        <Stethoscope className="h-4 w-4 mr-2 text-purple-600" />
+                                        View Vitals
+                                      </Link>
+                                    </DropdownMenuItem>
+                                  )}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </TableCell>
                           </TableRow>
                         ))}
