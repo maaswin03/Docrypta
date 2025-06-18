@@ -174,7 +174,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     {
       title: "Video Consultations",
       url: "/doctor/meet",
-      icon: Video,
+      icon: Video
     },
     {
       title: "Alerts",
