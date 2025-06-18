@@ -163,13 +163,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     {
       title: "Wallet",
       url: "/doctor/wallet",
-      icon: Wallet,
-      items: [
-        {
-          title: "Overview",
-          url: "/doctor/wallet",
-        },
-      ],
+      icon: Wallet
     },
     {
       title: "Video Consultations",
@@ -179,7 +173,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     {
       title: "Alerts",
       url: "/doctor/alerts",
-      icon: Bell,
+      icon: Bell
     },
   ]
 
