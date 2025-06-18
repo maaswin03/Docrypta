@@ -73,9 +73,7 @@ interface Doctor {
 interface Appointment {
   id: string
   doctor_id: string
-  doctor_name: string
   patient_id: string
-  patient_name: string
   appointment_date: string
   appointment_time: string
   status: 'pending' | 'accepted' | 'rejected' | 'paid' | 'completed'
@@ -213,7 +211,6 @@ export default function DoctorConnect() {
 
       const appointmentData = {
         doctor_id: selectedDoctor.id,
-        doctor_name: selectedDoctor.full_name,
         patient_id: user.id,
         patient_name: user.full_name,
         appointment_date: selectedDate,
@@ -611,7 +608,7 @@ export default function DoctorConnect() {
                           {appointments.map((appointment) => (
                             <TableRow key={appointment.id}>
                               <TableCell className="font-medium">
-                                {appointment.doctor_name}
+                                Dr. {appointment.doctor_id}
                               </TableCell>
                               <TableCell>
                                 {formatDate(appointment.appointment_date)}<br/>
@@ -713,7 +710,7 @@ export default function DoctorConnect() {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Doctor</span>
-                <span className="font-medium">{currentAppointment?.doctor_name}</span>
+                <span className="font-medium">Dr. {currentAppointment?.doctor_id}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Date</span>
