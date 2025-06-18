@@ -35,7 +35,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Search, Video, Stethoscope, Star, MapPin, Clock, Calendar, DollarSign, Wallet, CheckCircle, AlertCircle } from "lucide-react"
+import { Search, Video, Stethoscope, Star, MapPin, Clock, Calendar, DollarSign, Wallet, CheckCircle, AlertCircle, User } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { supabase } from "@/lib/supabaseClient"
