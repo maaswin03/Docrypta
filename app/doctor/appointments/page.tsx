@@ -27,12 +27,31 @@ import {
   Video, 
   Check, 
   RefreshCw,
-  Stethoscope
+  Stethoscope,
+  X,
+  Filter,
+  Search
 } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { supabase } from "@/lib/supabaseClient"
 import { useToast } from "@/hooks/use-toast"
 import Link from "next/link"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { Input } from "@/components/ui/input"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 
 interface Appointment {
   id: string
@@ -40,7 +59,7 @@ interface Appointment {
   patient_name: string
   appointment_date: string
   appointment_time: string
-  status: 'pending' | 'accepted' | 'completed'
+  status: 'pending' | 'accepted' | 'completed' | 'rejected'
   type: string
   notes?: string
   meeting_id?: string
@@ -50,13 +69,38 @@ export default function DoctorAppointments() {
   const { user } = useAuth()
   const { toast } = useToast()
   const [appointments, setAppointments] = useState<Appointment[]>([])
+  const [filteredAppointments, setFilteredAppointments] = useState<Appointment[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [updatingId, setUpdatingId] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState("all")
 
   useEffect(() => {
     fetchAppointments()
   }, [user?.id])
+
+  useEffect(() => {
+    // Apply filters whenever appointments, search query, or status filter changes
+    let filtered = [...appointments]
+    
+    // Apply search filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      filtered = filtered.filter(apt => 
+        apt.patient_name.toLowerCase().includes(query) ||
+        apt.type.toLowerCase().includes(query) ||
+        apt.notes?.toLowerCase().includes(query)
+      )
+    }
+    
+    // Apply status filter
+    if (statusFilter !== "all") {
+      filtered = filtered.filter(apt => apt.status === statusFilter)
+    }
+    
+    setFilteredAppointments(filtered)
+  }, [appointments, searchQuery, statusFilter])
 
   const fetchAppointments = async () => {
     if (!user?.id) return
@@ -76,6 +120,7 @@ export default function DoctorAppointments() {
       }
 
       setAppointments(data || [])
+      setFilteredAppointments(data || [])
     } catch (err) {
       console.error('Error fetching appointments:', err)
       setError('Failed to load appointments')
@@ -84,13 +129,13 @@ export default function DoctorAppointments() {
     }
   }
 
-  const acceptAppointment = async (appointmentId: string) => {
+  const updateAppointmentStatus = async (appointmentId: string, status: 'accepted' | 'rejected') => {
     try {
       setUpdatingId(appointmentId)
 
       const { error } = await supabase
         .from('appointments')
-        .update({ status: 'accepted' })
+        .update({ status })
         .eq('id', appointmentId)
 
       if (error) {
@@ -101,20 +146,20 @@ export default function DoctorAppointments() {
       setAppointments(prev => 
         prev.map(apt => 
           apt.id === appointmentId 
-            ? { ...apt, status: 'accepted' as const }
+            ? { ...apt, status: status }
             : apt
         )
       )
 
       toast({
-        title: "Appointment Accepted",
-        description: "The appointment has been accepted successfully.",
+        title: `Appointment ${status === 'accepted' ? 'Accepted' : 'Rejected'}`,
+        description: `The appointment has been ${status} successfully.`,
       })
     } catch (err) {
-      console.error('Error accepting appointment:', err)
+      console.error(`Error ${status} appointment:`, err)
       toast({
         title: "Error",
-        description: "Failed to accept appointment. Please try again.",
+        description: `Failed to ${status} appointment. Please try again.`,
         variant: "destructive",
       })
     } finally {
@@ -143,6 +188,7 @@ export default function DoctorAppointments() {
       case 'completed': return 'bg-green-100 text-green-800'
       case 'accepted': return 'bg-blue-100 text-blue-800'
       case 'pending': return 'bg-yellow-100 text-yellow-800'
+      case 'rejected': return 'bg-red-100 text-red-800'
       default: return 'bg-gray-100 text-gray-800'
     }
   }
@@ -217,106 +263,158 @@ export default function DoctorAppointments() {
                 </div>
               )}
 
-              {/* Appointments List */}
-              {appointments.length > 0 ? (
-                <div className="space-y-4">
-                  {appointments.map((appointment) => (
-                    <Card key={appointment.id} className="shadow-lg hover:shadow-xl transition-shadow">
-                      <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4">
-                            <div className="p-3 bg-primary/10 rounded-full">
-                              <User className="h-6 w-6 text-primary" />
-                            </div>
-                            <div>
-                              <h3 className="font-semibold text-lg">{appointment.patient_name}</h3>
-                              <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+              {/* Filters */}
+              <Card className="shadow-sm">
+                <CardContent className="p-4">
+                  <div className="flex flex-col md:flex-row gap-4">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search by patient name or type..."
+                        className="pl-9"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                    </div>
+                    <div className="w-full md:w-[200px]">
+                      <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger>
+                          <Filter className="h-4 w-4 mr-2" />
+                          <SelectValue placeholder="Filter by status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Statuses</SelectItem>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="accepted">Accepted</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                          <SelectItem value="rejected">Rejected</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Appointments Table */}
+              {filteredAppointments.length > 0 ? (
+                <Card className="shadow-lg">
+                  <CardContent className="p-0">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Patient</TableHead>
+                          <TableHead>Date & Time</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredAppointments.map((appointment) => (
+                          <TableRow key={appointment.id}>
+                            <TableCell className="font-medium">
+                              <div className="flex items-center gap-2">
+                                <User className="h-4 w-4 text-muted-foreground" />
+                                {appointment.patient_name}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-col">
                                 <div className="flex items-center gap-1">
-                                  <Calendar className="h-4 w-4" />
-                                  {formatDate(appointment.appointment_date)}
+                                  <Calendar className="h-3 w-3 text-muted-foreground" />
+                                  <span>{formatDate(appointment.appointment_date)}</span>
                                 </div>
-                                <div className="flex items-center gap-1">
-                                  <Clock className="h-4 w-4" />
-                                  {formatTime(appointment.appointment_time)}
+                                <div className="flex items-center gap-1 text-muted-foreground">
+                                  <Clock className="h-3 w-3" />
+                                  <span>{formatTime(appointment.appointment_time)}</span>
                                 </div>
                               </div>
-                              {appointment.notes && (
-                                <p className="text-sm text-muted-foreground mt-2">
-                                  {appointment.notes}
-                                </p>
-                              )}
-                            </div>
-                          </div>
-                          
-                          <div className="flex items-center gap-3">
-                            <div className="flex flex-col gap-2">
-                              <Badge className={getStatusColor(appointment.status)}>
-                                {appointment.status}
-                              </Badge>
+                            </TableCell>
+                            <TableCell>
                               <Badge className={getTypeColor(appointment.type)}>
                                 {appointment.type}
                               </Badge>
-                            </div>
-                            
-                            <div className="flex flex-col gap-2">
-                              {appointment.status === 'pending' && (
-                                <Button
-                                  onClick={() => acceptAppointment(appointment.id)}
-                                  disabled={updatingId === appointment.id}
-                                  size="sm"
-                                >
-                                  <Check className="h-4 w-4 mr-2" />
-                                  {updatingId === appointment.id ? 'Accepting...' : 'Accept'}
-                                </Button>
-                              )}
-                              
-                              {appointment.status === 'accepted' && (
-                                <>
-                                  <Button size="sm" asChild>
-                                    <Link href="/doctor/meet">
-                                      <Video className="h-4 w-4 mr-2" />
-                                      Join Meet
-                                    </Link>
-                                  </Button>
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={getStatusColor(appointment.status)}>
+                                {appointment.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-2">
+                                {appointment.status === 'pending' && (
+                                  <>
+                                    <Button
+                                      onClick={() => updateAppointmentStatus(appointment.id, 'accepted')}
+                                      disabled={updatingId === appointment.id}
+                                      size="sm"
+                                      variant="default"
+                                    >
+                                      <Check className="h-4 w-4 mr-1" />
+                                      Accept
+                                    </Button>
+                                    <Button
+                                      onClick={() => updateAppointmentStatus(appointment.id, 'rejected')}
+                                      disabled={updatingId === appointment.id}
+                                      size="sm"
+                                      variant="destructive"
+                                    >
+                                      <X className="h-4 w-4 mr-1" />
+                                      Reject
+                                    </Button>
+                                  </>
+                                )}
+                                
+                                {appointment.status === 'accepted' && (
+                                  <>
+                                    <Button size="sm" asChild>
+                                      <Link href="/doctor/meet">
+                                        <Video className="h-4 w-4 mr-1" />
+                                        Join
+                                      </Link>
+                                    </Button>
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      asChild
+                                    >
+                                      <Link href={`/doctor/patient-vitals/${appointment.patient_id}`}>
+                                        <Stethoscope className="h-4 w-4 mr-1" />
+                                        Vitals
+                                      </Link>
+                                    </Button>
+                                  </>
+                                )}
+                                
+                                {appointment.status === 'completed' && (
                                   <Button 
                                     variant="outline" 
                                     size="sm"
                                     asChild
                                   >
                                     <Link href={`/doctor/patient-vitals/${appointment.patient_id}`}>
-                                      <Stethoscope className="h-4 w-4 mr-2" />
-                                      View Vitals
+                                      <Stethoscope className="h-4 w-4 mr-1" />
+                                      Vitals
                                     </Link>
                                   </Button>
-                                </>
-                              )}
-                              
-                              {appointment.status === 'completed' && (
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  asChild
-                                >
-                                  <Link href={`/doctor/patient-vitals/${appointment.patient_id}`}>
-                                    <Stethoscope className="h-4 w-4 mr-2" />
-                                    View Vitals
-                                  </Link>
-                                </Button>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                                )}
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </CardContent>
+                </Card>
               ) : (
                 <Card className="shadow-lg">
                   <CardContent className="text-center py-12">
                     <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                     <h3 className="text-lg font-medium mb-2">No Appointments</h3>
                     <p className="text-muted-foreground">
-                      You don't have any appointments scheduled at the moment.
+                      {searchQuery || statusFilter !== "all" 
+                        ? "No appointments match your search criteria." 
+                        : "You don't have any appointments scheduled at the moment."}
                     </p>
                   </CardContent>
                 </Card>
