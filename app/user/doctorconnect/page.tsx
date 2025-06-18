@@ -115,6 +115,9 @@ export default function DoctorConnect() {
   const [isLoadingVitals, setIsLoadingVitals] = useState(false)
   const [showVitalsDialog, setShowVitalsDialog] = useState(false)
 
+  // Default consultation fee
+  const DEFAULT_FEE = 5
+
   // Fetch doctors and appointments on component mount
   useEffect(() => {
     fetchDoctors()
@@ -147,7 +150,7 @@ export default function DoctorConnect() {
         rating: 4.5 + Math.random() * 0.5, // Random rating between 4.5-5.0
         experience: Math.floor(Math.random() * 15) + 3, // Random experience between 3-18 years
         is_online: Math.random() > 0.3, // 70% chance of being online
-        fee: Math.floor(Math.random() * 100) + 50, // Random fee between $50-$150
+        fee: DEFAULT_FEE, // Default fee of $5
         wallet_address: doc.wallet_address || ''
       }))
 
@@ -217,7 +220,7 @@ export default function DoctorConnect() {
         appointment_time: selectedTime,
         status: 'pending',
         type: appointmentType,
-        fee: 75
+        fee: DEFAULT_FEE
       }
 
       const { data, error } = await supabase
@@ -267,12 +270,19 @@ export default function DoctorConnect() {
       return
     }
 
+    // Verify wallet address matches the one in user profile
+    if (user?.wallet_address && user.wallet_address !== connection.address) {
+      toast({
+        title: "Wallet Mismatch",
+        description: "The connected wallet doesn't match your registered wallet address",
+        variant: "destructive"
+      })
+      return
+    }
+
     try {
       setIsProcessingPayment(true)
 
-      // In a real app, this would interact with a blockchain
-      // For this demo, we'll simulate a successful transaction
-      
       // 1. Create a transaction record
       const transactionData = {
         doctor_id: currentAppointment.doctor_id,
@@ -443,6 +453,12 @@ export default function DoctorConnect() {
     return times
   }
 
+  // Get doctor name by ID
+  const getDoctorName = (doctorId: string) => {
+    const doctor = doctors.find(d => d.id === doctorId)
+    return doctor ? doctor.full_name : `Doctor #${doctorId}`
+  }
+
   return (
     <ProtectedRoute allowedRoles={['user']}>
       <SidebarProvider>
@@ -608,7 +624,7 @@ export default function DoctorConnect() {
                           {appointments.map((appointment) => (
                             <TableRow key={appointment.id}>
                               <TableCell className="font-medium">
-                                Dr. {appointment.doctor_id}
+                                Dr. {getDoctorName(appointment.doctor_id)}
                               </TableCell>
                               <TableCell>
                                 {formatDate(appointment.appointment_date)}<br/>
@@ -710,7 +726,7 @@ export default function DoctorConnect() {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Doctor</span>
-                <span className="font-medium">Dr. {currentAppointment?.doctor_id}</span>
+                <span className="font-medium">Dr. {getDoctorName(currentAppointment?.doctor_id || '')}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Date</span>
@@ -727,7 +743,7 @@ export default function DoctorConnect() {
               <Separator className="my-2" />
               <div className="flex justify-between">
                 <span className="font-medium">Total Amount</span>
-                <span className="font-bold">${currentAppointment?.fee}</span>
+                <span className="font-bold">${currentAppointment?.fee || DEFAULT_FEE}</span>
               </div>
             </div>
             
