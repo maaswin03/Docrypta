@@ -175,47 +175,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       title: "Video Consultations",
       url: "/doctor/meet",
       icon: Video,
-      items: [
-        {
-          title: "Join Meeting",
-          url: "/doctor/meet",
-        },
-      ],
-    },
-    {
-      title: "Patients",
-      url: "/doctor/patients",
-      icon: Users,
-      items: [
-        {
-          title: "All Patients",
-          url: "/doctor/patients",
-        },
-        {
-          title: "Patient Records",
-          url: "/doctor/patients/records",
-        },
-      ],
     },
     {
       title: "Alerts",
       url: "/doctor/alerts",
       icon: Bell,
-    },
-    {
-      title: "Settings",
-      url: "/doctor/settings",
-      icon: Settings2,
-      items: [
-        {
-          title: "Profile",
-          url: "/doctor/settings/profile",
-        },
-        {
-          title: "Preferences",
-          url: "/doctor/settings/preferences",
-        },
-      ],
     },
   ]
 
@@ -233,24 +197,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
   ]
 
-  // Doctor projects/quick access
-  const doctorProjects = [
-    {
-      name: "Medical Guidelines",
-      url: "/doctor/guidelines",
-      icon: Brain,
-    },
-    {
-      name: "Research Papers",
-      url: "/doctor/research",
-      icon: FileText,
-    },
-    {
-      name: "Continuing Education",
-      url: "/doctor/education",
-      icon: Settings2,
-    },
-  ]
 
   // Determine which navigation to show based on user type
   const navItems = user?.user_type === 'doctor' ? doctorNavItems : userNavItems
