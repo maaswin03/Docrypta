@@ -27,10 +27,10 @@ import {
   ArrowUpRight, 
   ArrowDownLeft,
   RefreshCw,
-  DollarSign
+  DollarSign,
+  Shield
 } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
-import { useWallet } from "@/hooks/useWallet"
 import { supabase } from "@/lib/supabaseClient"
 import { useToast } from "@/hooks/use-toast"
 
@@ -47,10 +47,10 @@ interface Transaction {
 
 export default function DoctorWallet() {
   const { user } = useAuth()
-  const { connection, connectWallet } = useWallet()
   const { toast } = useToast()
   const [transactions, setTransactions] = useState<Transaction[]>([])
   const [balance, setBalance] = useState(0)
+  const [walletAddress, setWalletAddress] = useState("")
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -61,6 +61,21 @@ export default function DoctorWallet() {
       try {
         setIsLoading(true)
         setError(null)
+
+        // Fetch wallet address from user profile
+        const { data: userData, error: userError } = await supabase
+          .from('users')
+          .select('wallet_address')
+          .eq('id', user.id)
+          .single()
+
+        if (userError) {
+          throw new Error(userError.message)
+        }
+
+        if (userData && userData.wallet_address) {
+          setWalletAddress(userData.wallet_address)
+        }
 
         // Fetch transactions
         const { data: transactionData, error: transError } = await supabase
@@ -220,21 +235,21 @@ export default function DoctorWallet() {
                       Wallet Address
                     </CardTitle>
                     <CardDescription>
-                      Your connected Web3 wallet
+                      Your registered blockchain wallet
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {connection.isConnected ? (
+                    {walletAddress ? (
                       <>
                         <div className="p-3 bg-muted rounded-lg">
                           <div className="flex items-center justify-between">
                             <span className="font-mono text-sm break-all">
-                              {connection.address}
+                              {walletAddress}
                             </span>
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => copyToClipboard(connection.address)}
+                              onClick={() => copyToClipboard(walletAddress)}
                             >
                               <Copy className="h-4 w-4" />
                             </Button>
@@ -242,18 +257,22 @@ export default function DoctorWallet() {
                         </div>
                         <div className="flex items-center gap-2 text-sm text-green-600">
                           <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                          Connected
+                          <span>Registered wallet address</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Shield className="h-3 w-3" />
+                          <span>This is the wallet address you registered with during account creation</span>
                         </div>
                       </>
                     ) : (
                       <div className="space-y-4">
                         <p className="text-sm text-muted-foreground">
-                          No wallet connected
+                          No wallet address found in your profile
                         </p>
-                        <Button onClick={connectWallet}>
-                          <Wallet className="h-4 w-4 mr-2" />
-                          Connect Wallet
-                        </Button>
+                        <div className="flex items-center gap-2 text-xs text-amber-600">
+                          <Shield className="h-3 w-3" />
+                          <span>Please contact support to update your wallet information</span>
+                        </div>
                       </div>
                     )}
                   </CardContent>
