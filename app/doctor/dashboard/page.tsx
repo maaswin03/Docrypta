@@ -31,6 +31,7 @@ import {
 } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { supabase } from "@/lib/supabaseClient"
+import { Line, LineChart, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 
 interface DashboardStats {
   totalRevenue: number
@@ -49,6 +50,16 @@ interface RecentAppointment {
   type: string
 }
 
+interface DailyRevenue {
+  date: string
+  amount: number
+}
+
+interface DailyPatients {
+  date: string
+  count: number
+}
+
 export default function DoctorDashboard() {
   const { user } = useAuth()
   const [stats, setStats] = useState<DashboardStats>({
@@ -60,6 +71,8 @@ export default function DoctorDashboard() {
     completedToday: 0
   })
   const [recentAppointments, setRecentAppointments] = useState<RecentAppointment[]>([])
+  const [dailyRevenue, setDailyRevenue] = useState<DailyRevenue[]>([])
+  const [dailyPatients, setDailyPatients] = useState<DailyPatients[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -74,7 +87,7 @@ export default function DoctorDashboard() {
         // Fetch total revenue from transactions
         const { data: transactions, error: transError } = await supabase
           .from('transactions')
-          .select('amount, type')
+          .select('amount, type, created_at')
           .eq('doctor_id', user.id)
 
         let totalRevenue = 0
@@ -82,6 +95,33 @@ export default function DoctorDashboard() {
           totalRevenue = transactions
             .filter(t => t.type === 'received')
             .reduce((sum, t) => sum + Number(t.amount), 0)
+            
+          // Process daily revenue for the last 10 days
+          const last10Days = getLast10Days()
+          const revenueByDay: Record<string, number> = {}
+          
+          // Initialize all days with 0
+          last10Days.forEach(day => {
+            revenueByDay[day] = 0
+          })
+          
+          // Sum revenue by day
+          transactions
+            .filter(t => t.type === 'received')
+            .forEach(t => {
+              const date = new Date(t.created_at).toISOString().split('T')[0]
+              if (revenueByDay[date] !== undefined) {
+                revenueByDay[date] += Number(t.amount)
+              }
+            })
+            
+          // Convert to array format for chart
+          const dailyRevenueData = Object.entries(revenueByDay).map(([date, amount]) => ({
+            date: formatDateForChart(date),
+            amount
+          }))
+          
+          setDailyRevenue(dailyRevenueData)
         }
 
         // Fetch appointments data
@@ -108,6 +148,33 @@ export default function DoctorDashboard() {
           // Count unique patients
           const uniquePatients = new Set(appointments.map(a => a.patient_id))
           totalPatients = uniquePatients.size
+          
+          // Process daily patients for the last 10 days
+          const last10Days = getLast10Days()
+          const patientsByDay: Record<string, number> = {}
+          
+          // Initialize all days with 0
+          last10Days.forEach(day => {
+            patientsByDay[day] = 0
+          })
+          
+          // Count appointments by day
+          appointments
+            .filter(a => a.status === 'completed')
+            .forEach(a => {
+              const date = a.appointment_date
+              if (patientsByDay[date] !== undefined) {
+                patientsByDay[date]++
+              }
+            })
+            
+          // Convert to array format for chart
+          const dailyPatientsData = Object.entries(patientsByDay).map(([date, count]) => ({
+            date: formatDateForChart(date),
+            count
+          }))
+          
+          setDailyPatients(dailyPatientsData)
         }
 
         // Fetch average rating from feedback
@@ -157,6 +224,23 @@ export default function DoctorDashboard() {
 
     fetchDashboardData()
   }, [user?.id])
+
+  // Helper function to get the last 10 days as YYYY-MM-DD strings
+  const getLast10Days = () => {
+    const dates = []
+    for (let i = 9; i >= 0; i--) {
+      const date = new Date()
+      date.setDate(date.getDate() - i)
+      dates.push(date.toISOString().split('T')[0])
+    }
+    return dates
+  }
+  
+  // Format date for chart display
+  const formatDateForChart = (dateString: string) => {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  }
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -298,6 +382,99 @@ export default function DoctorDashboard() {
                   </CardContent>
                 </Card>
               </div>
+
+              {/* Revenue Chart */}
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <DollarSign className="h-5 w-5" />
+                    Daily Revenue (Last 10 Days)
+                  </CardTitle>
+                  <CardDescription>
+                    Revenue trends over the past 10 days
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart
+                        data={dailyRevenue}
+                        margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
+                        <XAxis 
+                          dataKey="date" 
+                          tick={{ fontSize: 12 }}
+                          tickMargin={10}
+                        />
+                        <YAxis 
+                          tickFormatter={(value) => `$${value}`}
+                          tick={{ fontSize: 12 }}
+                          tickMargin={10}
+                        />
+                        <Tooltip 
+                          formatter={(value) => [`$${value}`, 'Revenue']}
+                          labelFormatter={(label) => `Date: ${label}`}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="amount" 
+                          stroke="#10b981" 
+                          strokeWidth={2}
+                          dot={{ r: 4 }}
+                          activeDot={{ r: 6 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Patients Chart */}
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Daily Patients (Last 10 Days)
+                  </CardTitle>
+                  <CardDescription>
+                    Number of patients seen over the past 10 days
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[300px] w-full">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart
+                        data={dailyPatients}
+                        margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+                      >
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} opacity={0.2} />
+                        <XAxis 
+                          dataKey="date" 
+                          tick={{ fontSize: 12 }}
+                          tickMargin={10}
+                        />
+                        <YAxis 
+                          tick={{ fontSize: 12 }}
+                          tickMargin={10}
+                        />
+                        <Tooltip 
+                          formatter={(value) => [`${value}`, 'Patients']}
+                          labelFormatter={(label) => `Date: ${label}`}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="count" 
+                          stroke="#8b5cf6" 
+                          strokeWidth={2}
+                          dot={{ r: 4 }}
+                          activeDot={{ r: 6 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
 
               {/* Recent Activity */}
               <div className="grid gap-6 md:grid-cols-2">
