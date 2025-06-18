@@ -198,6 +198,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       ],
     },
     {
+      title: "Alerts",
+      url: "/doctor/alerts",
+      icon: Bell,
+    },
+    {
       title: "Settings",
       url: "/doctor/settings",
       icon: Settings2,
