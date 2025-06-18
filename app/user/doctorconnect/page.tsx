@@ -220,7 +220,6 @@ export default function DoctorConnect() {
         appointment_time: selectedTime,
         status: 'pending',
         type: appointmentType,
-        fee: DEFAULT_FEE
       }
 
       const { data, error } = await supabase
