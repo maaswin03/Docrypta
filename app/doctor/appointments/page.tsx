@@ -272,9 +272,11 @@ export default function DoctorAppointments() {
                               
                               {appointment.status === 'accepted' && (
                                 <>
-                                  <Button size="sm">
-                                    <Video className="h-4 w-4 mr-2" />
-                                    Join Meet
+                                  <Button size="sm" asChild>
+                                    <Link href="/doctor/meet">
+                                      <Video className="h-4 w-4 mr-2" />
+                                      Join Meet
+                                    </Link>
                                   </Button>
                                   <Button 
                                     variant="outline" 

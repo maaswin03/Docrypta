@@ -24,6 +24,7 @@ import {
   HelpCircle,
   Smartphone,
   ShoppingCart,
+  Video,
 } from "lucide-react"
 
 import { NavMain } from "@/components/sidebar/nav-main"
@@ -146,9 +147,38 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           title: "Overview",
           url: "/doctor/dashboard",
         },
+      ],
+    },
+    {
+      title: "Appointments",
+      url: "/doctor/appointments",
+      icon: Calendar,
+      items: [
         {
-          title: "Today's Schedule",
-          url: "/doctor/dashboard/schedule",
+          title: "All Appointments",
+          url: "/doctor/appointments",
+        },
+      ],
+    },
+    {
+      title: "Wallet",
+      url: "/doctor/wallet",
+      icon: Wallet,
+      items: [
+        {
+          title: "Overview",
+          url: "/doctor/wallet",
+        },
+      ],
+    },
+    {
+      title: "Video Consultations",
+      url: "/doctor/meet",
+      icon: Video,
+      items: [
+        {
+          title: "Join Meeting",
+          url: "/doctor/meet",
         },
       ],
     },
@@ -162,69 +192,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           url: "/doctor/patients",
         },
         {
-          title: "Active Cases",
-          url: "/doctor/patients/active",
-        },
-        {
           title: "Patient Records",
           url: "/doctor/patients/records",
-        },
-      ],
-    },
-    {
-      title: "Appointments",
-      url: "/doctor/appointments",
-      icon: Calendar,
-      items: [
-        {
-          title: "Schedule",
-          url: "/doctor/appointments/schedule",
-        },
-        {
-          title: "Pending Requests",
-          url: "/doctor/appointments/requests",
-        },
-        {
-          title: "History",
-          url: "/doctor/appointments/history",
-        },
-      ],
-    },
-    {
-      title: "Consultations",
-      url: "/doctor/consultations",
-      icon: MessageSquare,
-      items: [
-        {
-          title: "Video Calls",
-          url: "/doctor/consultations/video",
-        },
-        {
-          title: "Chat",
-          url: "/doctor/consultations/chat",
-        },
-        {
-          title: "Follow-ups",
-          url: "/doctor/consultations/followups",
-        },
-      ],
-    },
-    {
-      title: "Medical Records",
-      url: "/doctor/records",
-      icon: FileText,
-      items: [
-        {
-          title: "Patient Files",
-          url: "/doctor/records/files",
-        },
-        {
-          title: "Prescriptions",
-          url: "/doctor/records/prescriptions",
-        },
-        {
-          title: "Lab Results",
-          url: "/doctor/records/lab-results",
         },
       ],
     },
@@ -236,10 +205,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {
           title: "Profile",
           url: "/doctor/settings/profile",
-        },
-        {
-          title: "Availability",
-          url: "/doctor/settings/availability",
         },
         {
           title: "Preferences",

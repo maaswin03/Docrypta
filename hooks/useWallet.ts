@@ -41,7 +41,7 @@ export function useWallet() {
     }
   }, [])
 
-  const disconnect = useCallback(() => {
+  const disconnectWallet = useCallback(() => {
     walletService.disconnect()
     setConnection({ address: "", isConnected: false })
     setError(null)
@@ -49,9 +49,10 @@ export function useWallet() {
 
   return {
     connection,
+    wallet: connection, // For backward compatibility
     isConnecting,
     error,
     connectWallet,
-    disconnect,
+    disconnectWallet,
   }
 }

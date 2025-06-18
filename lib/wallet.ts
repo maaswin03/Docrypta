@@ -15,7 +15,18 @@ export class WalletService {
   private isConnected = false
   private address = ""
 
-  private constructor() {}
+  private constructor() {
+    // Initialize from localStorage if available
+    if (typeof window !== "undefined") {
+      const storedAddress = localStorage.getItem("walletAddress")
+      const storedConnected = localStorage.getItem("walletConnected")
+      
+      if (storedAddress && storedConnected === "true") {
+        this.address = storedAddress
+        this.isConnected = true
+      }
+    }
+  }
 
   public static getInstance(): WalletService {
     if (!WalletService.instance) {
