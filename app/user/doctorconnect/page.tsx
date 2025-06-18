@@ -114,6 +114,7 @@ export default function DoctorConnect() {
   const [patientVitals, setPatientVitals] = useState<PatientVitals | null>(null)
   const [isLoadingVitals, setIsLoadingVitals] = useState(false)
   const [showVitalsDialog, setShowVitalsDialog] = useState(false)
+  const [paymentSuccess, setPaymentSuccess] = useState(false)
 
   // Default consultation fee
   const DEFAULT_FEE = 5
@@ -214,12 +215,14 @@ export default function DoctorConnect() {
 
       const appointmentData = {
         doctor_id: selectedDoctor.id,
+        doctor_name: selectedDoctor.full_name,
         patient_id: user.id,
         patient_name: user.full_name,
         appointment_date: selectedDate,
         appointment_time: selectedTime,
         status: 'pending',
         type: appointmentType,
+        fee: selectedDoctor.fee || DEFAULT_FEE
       }
 
       const { data, error } = await supabase
@@ -281,13 +284,18 @@ export default function DoctorConnect() {
 
     try {
       setIsProcessingPayment(true)
+      setPaymentSuccess(false)
 
+      // Simulate payment processing delay
+      await new Promise(resolve => setTimeout(resolve, 2000))
+
+      // For testing purposes, always succeed
       // 1. Create a transaction record
       const transactionData = {
         doctor_id: currentAppointment.doctor_id,
         patient_id: user?.id,
         patient_name: user?.full_name,
-        amount: currentAppointment.fee,
+        amount: currentAppointment.fee || DEFAULT_FEE,
         type: 'received',
         transaction_hash: `0x${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`,
         description: `Payment for ${currentAppointment.type} on ${new Date(currentAppointment.appointment_date).toLocaleDateString()}`
@@ -302,9 +310,13 @@ export default function DoctorConnect() {
       }
 
       // 2. Update appointment status to paid
+      const meetingId = generateMeetingId()
       const { error: apptError } = await supabase
         .from('appointments')
-        .update({ status: 'paid', meeting_id: generateMeetingId() })
+        .update({ 
+          status: 'paid', 
+          meeting_id: meetingId
+        })
         .eq('id', currentAppointment.id)
 
       if (apptError) {
@@ -315,18 +327,23 @@ export default function DoctorConnect() {
       setAppointments(prev => 
         prev.map(apt => 
           apt.id === currentAppointment.id 
-            ? { ...apt, status: 'paid' } 
+            ? { ...apt, status: 'paid', meeting_id: meetingId } 
             : apt
         )
       )
 
+      setPaymentSuccess(true)
+      
       toast({
         title: "Payment Successful",
         description: "Your appointment has been paid for and is now confirmed",
       })
 
-      setShowPaymentDialog(false)
-      fetchAppointments() // Refresh appointments to get the meeting ID
+      // Don't close dialog immediately to show success state
+      setTimeout(() => {
+        setShowPaymentDialog(false)
+        fetchAppointments() // Refresh appointments to get the meeting ID
+      }, 2000)
 
     } catch (err) {
       console.error('Error processing payment:', err)
@@ -722,60 +739,79 @@ export default function DoctorConnect() {
           </DialogHeader>
           
           <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Doctor</span>
-                <span className="font-medium">Dr. {getDoctorName(currentAppointment?.doctor_id || '')}</span>
+            {paymentSuccess ? (
+              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                <div className="flex flex-col items-center text-center gap-2">
+                  <CheckCircle className="h-12 w-12 text-green-600" />
+                  <h3 className="text-lg font-medium text-green-800">Payment Successful!</h3>
+                  <p className="text-green-600">Your appointment has been confirmed.</p>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Date</span>
-                <span>{currentAppointment?.appointment_date && formatDate(currentAppointment.appointment_date)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Time</span>
-                <span>{currentAppointment?.appointment_time && formatTime(currentAppointment.appointment_time)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Type</span>
-                <span>{currentAppointment?.type}</span>
-              </div>
-              <Separator className="my-2" />
-              <div className="flex justify-between">
-                <span className="font-medium">Total Amount</span>
-                <span className="font-bold">${currentAppointment?.fee || DEFAULT_FEE}</span>
-              </div>
-            </div>
-            
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium">Wallet Status</h4>
-              {connection.isConnected ? (
-                <div className="p-3 bg-green-50 border border-green-200 rounded-md">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle className="h-4 w-4 text-green-600" />
-                    <div>
-                      <p className="text-sm font-medium text-green-800">Wallet Connected</p>
-                      <p className="text-xs font-mono text-green-600">
-                        {connection.address.slice(0, 6)}...{connection.address.slice(-4)}
-                      </p>
-                    </div>
+            ) : (
+              <>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Doctor</span>
+                    <span className="font-medium">Dr. {getDoctorName(currentAppointment?.doctor_id || '')}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Date</span>
+                    <span>{currentAppointment?.appointment_date && formatDate(currentAppointment.appointment_date)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Time</span>
+                    <span>{currentAppointment?.appointment_time && formatTime(currentAppointment.appointment_time)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-sm text-muted-foreground">Type</span>
+                    <span>{currentAppointment?.type}</span>
+                  </div>
+                  <Separator className="my-2" />
+                  <div className="flex justify-between">
+                    <span className="font-medium">Total Amount</span>
+                    <span className="font-bold">${currentAppointment?.fee || DEFAULT_FEE}</span>
                   </div>
                 </div>
-              ) : (
-                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
-                  <div className="flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4 text-yellow-600" />
-                    <div>
-                      <p className="text-sm font-medium text-yellow-800">Wallet Not Connected</p>
-                      <p className="text-xs text-yellow-600">Connect your wallet to proceed with payment</p>
+                
+                <div className="space-y-2">
+                  <h4 className="text-sm font-medium">Wallet Status</h4>
+                  {connection.isConnected ? (
+                    <div className="p-3 bg-green-50 border border-green-200 rounded-md">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        <div>
+                          <p className="text-sm font-medium text-green-800">Wallet Connected</p>
+                          <p className="text-xs font-mono text-green-600">
+                            {connection.address.slice(0, 6)}...{connection.address.slice(-4)}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4 text-yellow-600" />
+                        <div>
+                          <p className="text-sm font-medium text-yellow-800">Wallet Not Connected</p>
+                          <p className="text-xs text-yellow-600">Connect your wallet to proceed with payment</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </>
+            )}
           </div>
           
           <DialogFooter className="flex flex-col sm:flex-row gap-2">
-            {!connection.isConnected ? (
+            {paymentSuccess ? (
+              <Button 
+                onClick={() => setShowPaymentDialog(false)}
+                className="w-full"
+              >
+                Close
+              </Button>
+            ) : !connection.isConnected ? (
               <Button 
                 onClick={connectWallet} 
                 className="w-full"
@@ -790,17 +826,19 @@ export default function DoctorConnect() {
                 className="w-full"
               >
                 <DollarSign className="h-4 w-4 mr-2" />
-                {isProcessingPayment ? 'Processing...' : 'Pay Now'}
+                {isProcessingPayment ? 'Processing...' : 'Pay Now (Always Succeeds)'}
               </Button>
             )}
-            <Button 
-              variant="outline" 
-              onClick={() => setShowPaymentDialog(false)}
-              className="w-full sm:w-auto"
-              disabled={isProcessingPayment}
-            >
-              Cancel
-            </Button>
+            {!paymentSuccess && (
+              <Button 
+                variant="outline" 
+                onClick={() => setShowPaymentDialog(false)}
+                className="w-full sm:w-auto"
+                disabled={isProcessingPayment}
+              >
+                Cancel
+              </Button>
+            )}
           </DialogFooter>
         </DialogContent>
       </Dialog>
