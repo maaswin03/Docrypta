@@ -178,6 +178,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     },
   ]
 
+  const doctorProjects = [
+    
+  ]
+
 
   // Determine which navigation to show based on user type
   const navItems = user?.user_type === 'doctor' ? doctorNavItems : userNavItems
