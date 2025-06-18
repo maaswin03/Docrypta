@@ -20,18 +20,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
-import { 
-  Activity, 
-  Brain, 
-  HeartPulse, 
-  Thermometer, 
-  Droplets, 
-  Gauge, 
-  RefreshCw,
-  Lungs,
-  Droplet,
-  AlertCircle
-} from "lucide-react"
+import { Activity, Brain, HeartPulse, Thermometer, Droplets, Gauge, RefreshCw, Settings as Lungs, Droplet, AlertCircle } from "lucide-react"
 import { useAuth } from "@/lib/auth-context"
 import { supabase } from "@/lib/supabaseClient"
 import { useToast } from "@/hooks/use-toast"
